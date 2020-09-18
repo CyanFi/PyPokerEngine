@@ -12,27 +12,31 @@ from pypokerengine.utils.card_utils import gen_cards, estimate_hole_card_win_rat
 
 class QLearningPlayer(BasePokerPlayer):
 
-    def __init__(self, path):
+    def __init__(self, path, training):
         '''
-        Q: hand_strength, bid_blind_pos, action
+        Q: hand_strength, big_blind_pos, self.stack, action
         '''
-        self.fold_ratio = self.call_ratio = raise_ratio = 1.0 / 3
-        self.nb_player = None
-        self.Q = np.zeros(11 * 2 * 4).reshape(11, 2, 4)
-        # load modules:
+        self.fold_ratio = self.raise_ratio = self.call_ratio = 1.0 / 3
+        self.nb_player = self.player_id = None
+
         try:
+            # load model:
             self.Q = np.load(path)
         except:
+            # initialize model
+            self.Q = np.zeros((11, 2, 21, 4))
             pass
         # hyper-parameter for q learning
-        self.epislon = 0.1
+        self.epsilon = 0.1
         self.gamma = 0.9
         self.learning_rate = 0.05
-        self.num_simulation = 1000
+        self.num_simulation = 100
+        # training required game attribute
         self.hand_strength = 0
         self.hole_card = None
         self.model_path = path
         self.history = []
+        self.training = training
 
     def set_action_ratio(self, fold_ratio, call_ratio, raise_ratio):
         ratio = [fold_ratio, call_ratio, raise_ratio]
@@ -41,10 +45,13 @@ class QLearningPlayer(BasePokerPlayer):
 
     @staticmethod
     def action_to_int(action):
+        """
+        convert type action to int
+        """
         if action == 'fold':
-            return 0
-        if action == 'check':
             return 1
+        if action == 'check':
+            return 0
         if action == 'call':
             return 2
         if action == 'raise':
@@ -55,23 +62,30 @@ class QLearningPlayer(BasePokerPlayer):
                                                          nb_player=self.nb_player,
                                                          hole_card=gen_cards(hole_card),
                                                          community_card=gen_cards(round_state['community_card']))
-        state = int(self.hand_strength * 10), round_state['big_blind_pos']
-        max_a = 0
-        max_q = -100000
-        for a in valid_actions:
-            tmp_a = self.action_to_int(a['action'])
-            i=state+(tmp_a,)
-            if self.Q[i] > max_q:
-                max_a = a
-                max_q = self.Q[i]
-        choice = max_a
+        state = int(self.hand_strength * 10), round_state['big_blind_pos'], int(
+            round_state['seats'][self.player_id]['stack'] / 10)
+
+        # epsilon-greedy exploration
+        if rand.random() < self.epsilon:
+            choice = self.__choice_action(valid_actions)
+        else:
+            max_a = 0
+            max_q = -100000
+            for a in valid_actions:
+                tmp_a = self.action_to_int(a['action'])
+                i = state + (tmp_a,)
+                if self.Q[i] > max_q:
+                    max_a = a
+                    max_q = self.Q[i]
+            choice = max_a
+
         action = choice["action"]
         amount = choice["amount"]
         if action == "raise":
             # To simpilify the problem, raise only at minimum
             amount = amount["min"]
         # record the action
-        self.history.append(state+(self.action_to_int(action),))
+        self.history.append(state + (self.action_to_int(action),))
         return action, amount
 
     def __choice_action(self, valid_actions):
@@ -85,6 +99,10 @@ class QLearningPlayer(BasePokerPlayer):
 
     def receive_game_start_message(self, game_info):
         self.nb_player = game_info['player_num']
+        for i in range(0, len(game_info['seats'])):
+            if self.uuid == game_info['seats'][i]['uuid']:
+                self.player_id = i
+                break
 
     def receive_round_start_message(self, round_count, hole_card, seats):
         pass
@@ -96,18 +114,29 @@ class QLearningPlayer(BasePokerPlayer):
         pass
 
     def receive_round_result_message(self, winners, hand_info, round_state):
-        if self.history:
-            self.gamma=1.0/round_state['round_count']
-            # player has declared some action before
-            # define the reward
-            if winners[0]['uuid']==self.uuid:
-                reward = winners[0]['stack'] - 100
-            else:
-                reward = 100- winners[0]['stack']
-            # reward all history actions
+        if self.history and self.training:
+            # if player has declared some action before
+            # update epsilon
+            # self.epsilon = 1.0 / round_state['round_count']
 
-            for h in self.history:
-                learning_target = reward + self.gamma * self.Q[h]
+            # define the reward and append the last action to history
+            if winners[0]['uuid'] == self.uuid:
+                # player win the game
+                reward = winners[0]['stack'] - 100
+                hand_strength = 10
+            else:
+                reward = 100 - winners[0]['stack']
+                hand_strength = 0
+            _h = hand_strength, round_state['big_blind_pos'], int(round_state['seats'][self.player_id]['stack'] / 10)
+            self.history.append(_h + (None,))
+
+            # reward all history actions
+            for i in range(0, len(self.history) - 1):
+                h = self.history[i]
+                next_h = self.history[i + 1]
+                learning_target = reward + self.gamma * np.max(self.Q[next_h[0], :]) - self.Q[h]
                 self.Q[h] = self.Q[h] + self.learning_rate * learning_target
-            # save the model
+            # clear history
+            self.history = []
+            # save model
             np.save(self.model_path, self.Q)
