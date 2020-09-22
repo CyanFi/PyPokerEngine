@@ -10,13 +10,17 @@ from my_players.QLearningPlayer import QLearningPlayer
 
 num_episode = 100
 win = 0
-path = 'model/ql.npy'
+path0 = 'model/QLearningPlayer0.npy'
+path1 = 'model/QLearningPlayer1.npy'
+count = 0
+log_interval = 20
+log = []
 for i in range(0, num_episode):
+	count = count + 1
     config = setup_config(max_round=100, initial_stack=100, small_blind_amount=5)
     config.register_player(name="p1", algorithm=RandomPlayer())
-    config.register_player(name="p2", algorithm=QLearningPlayer(path, training=False))
+    config.register_player(name="p2", algorithm=QLearningPlayer(path0, training=False))
     game_result = start_poker(config, verbose=0)
-    if game_result['players'][1]['stack'] != 0:
-        # player 1 wins
-        win += 1
-print("winning {} out of {} episodes".format(win, num_episode))
+    if count % log_interval == 0:
+            log.append([i + 1, win / count])
+            print(count,' episode ',win / count)
