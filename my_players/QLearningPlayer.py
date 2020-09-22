@@ -12,32 +12,33 @@ from pypokerengine.utils.card_utils import gen_cards, estimate_hole_card_win_rat
 
 class QLearningPlayer(BasePokerPlayer):
 
-    def __init__(self,path,training,epsilon):
-        '''
+    def __init__(self, path, training):
+        """
         Q: hand_strength, big_blind_pos, self.stack, action
-        '''
+        """
         self.fold_ratio = self.raise_ratio = self.call_ratio = 1.0 / 3
         self.nb_player = self.player_id = None
-
         try:
             # load model:
             self.Q = np.load(path)
         except:
-            # initialize model
+            # initialize Q table
             self.Q = np.zeros((21, 2, 21, 4))
-            print(self.Q)
             pass
         # hyper-parameter for q learning
-        self.epsilon = epsilon
+        self.epsilon = 0.1
         self.gamma = 0.9
         self.learning_rate = 0.05
         self.num_simulation = 100
-        # training required game attribute
+        # training-required game attribute
         self.hand_strength = 0
         self.hole_card = None
         self.model_path = path
         self.history = []
         self.training = training
+
+    def load_model(self):
+        self.Q = np.load(self.model_path)
 
     def set_action_ratio(self, fold_ratio, call_ratio, raise_ratio):
         ratio = [fold_ratio, call_ratio, raise_ratio]
@@ -62,12 +63,12 @@ class QLearningPlayer(BasePokerPlayer):
         self.hand_strength = estimate_hole_card_win_rate(nb_simulation=self.num_simulation,
                                                          nb_player=self.nb_player,
                                                          hole_card=gen_cards(hole_card),
-                                                                         community_card=gen_cards(round_state['community_card']))
+                                                         community_card=gen_cards(round_state['community_card']))
         state = int(self.hand_strength * 20), round_state['big_blind_pos'], int(
             round_state['seats'][self.player_id]['stack'] / 10)
 
         # epsilon-greedy exploration
-        if (rand.random() < self.epsilon):
+        if self.training and rand.random() < self.epsilon:
             choice = self.__choice_action(valid_actions)
         else:
             max_a = 0
@@ -83,7 +84,7 @@ class QLearningPlayer(BasePokerPlayer):
         action = choice["action"]
         amount = choice["amount"]
         if action == "raise":
-            # To simpilify the problem, raise only at minimum
+            # To simplify the problem, raise only at minimum
             amount = amount["min"]
         # record the action
         self.history.append(state + (self.action_to_int(action),))
@@ -117,8 +118,6 @@ class QLearningPlayer(BasePokerPlayer):
     def receive_round_result_message(self, winners, hand_info, round_state):
         if self.history and self.training:
             # if player has declared some action before
-            # update epsilon
-            # self.epsilon = 1.0 / round_state['round_count']
 
             # define the reward and append the last action to history
             if winners[0]['uuid'] == self.uuid:
