@@ -12,7 +12,7 @@ from pypokerengine.utils.card_utils import gen_cards, estimate_hole_card_win_rat
 
 class QLearningPlayer(BasePokerPlayer):
 
-    def __init__(self, path, training,epsilon):
+    def __init__(self,path,training,epsilon):
         '''
         Q: hand_strength, big_blind_pos, self.stack, action
         '''
@@ -25,6 +25,7 @@ class QLearningPlayer(BasePokerPlayer):
         except:
             # initialize model
             self.Q = np.zeros((21, 2, 21, 4))
+            print(self.Q)
             pass
         # hyper-parameter for q learning
         self.epsilon = epsilon
@@ -37,9 +38,6 @@ class QLearningPlayer(BasePokerPlayer):
         self.model_path = path
         self.history = []
         self.training = training
-
-    def load_model(self):
-        self.Q = np.load(self.model_path)
 
     def set_action_ratio(self, fold_ratio, call_ratio, raise_ratio):
         ratio = [fold_ratio, call_ratio, raise_ratio]
@@ -64,79 +62,14 @@ class QLearningPlayer(BasePokerPlayer):
         self.hand_strength = estimate_hole_card_win_rate(nb_simulation=self.num_simulation,
                                                          nb_player=self.nb_player,
                                                          hole_card=gen_cards(hole_card),
-                                                         community_card=gen_cards(round_state['community_card']))
+                                                                         community_card=gen_cards(round_state['community_card']))
         state = int(self.hand_strength * 20), round_state['big_blind_pos'], int(
             round_state['seats'][self.player_id]['stack'] / 10)
-<<<<<<< Updated upstream
-=======
-<<<<<<< HEAD
-<<<<<<< HEAD
-		
-		if self.training:
-			# epsilon-greedy exploration
-			if rand.random() < self.epsilon:
-				choice = self.__choice_action(valid_actions)
-			else:
-				max_a = 0
-				max_q = -100000
-				for a in valid_actions:
-					tmp_a = self.action_to_int(a['action'])
-					i = state + (tmp_a,)
-					if self.Q[i] > max_q:
-						max_a = a
-						max_q = self.Q[i]
-				choice = max_a
 
-			action = choice["action"]
-			amount = choice["amount"]
-			if action == "raise":
-				# To simpilify the problem, raise only at minimum
-				amount = amount["min"]
-			# record the action
-			self.history.append(state + (self.action_to_int(action),))
-			return action, amount
-		
-		else:
-			max_a = 0
-			max_q = -100000
-			for a in valid_actions:
-				tmp_a = self.action_to_int(a['action'])
-				i = state + (tmp_a,)
-				if self.Q[i] > max_q:
-					max_a = a
-					max_q = self.Q[i]
-			choice = max_a
-		
-		action = choice["action"]
-		amount = choice["amount"]
-		if action == "raise":
-			# To simpilify the problem, raise only at minimum
-			amount = amount["min"]
-		# record the action
-		self.history.append(state + (self.action_to_int(action),))
-		return action, amount
-			
-=======
-=======
->>>>>>> c6f893c6917339457f7522a3cc54ce89bd497f22
->>>>>>> Stashed changes
-
-        if self.training:
-            # epsilon-greedy exploration
-            if rand.random() < self.epsilon:
-                choice = self.__choice_action(valid_actions)
-            else:
-                max_a = 0
-                max_q = -100000
-                for a in valid_actions:
-                    tmp_a = self.action_to_int(a['action'])
-                    i = state + (tmp_a,)
-                    if self.Q[i] > max_q:
-                        max_a = a
-                        max_q = self.Q[i]
-                choice = max_a
+        # epsilon-greedy exploration
+        if (rand.random() < self.epsilon):
+            choice = self.__choice_action(valid_actions)
         else:
-            # no random action
             max_a = 0
             max_q = -100000
             for a in valid_actions:
@@ -150,12 +83,11 @@ class QLearningPlayer(BasePokerPlayer):
         action = choice["action"]
         amount = choice["amount"]
         if action == "raise":
-            # To simplify the problem, raise only at minimum
+            # To simpilify the problem, raise only at minimum
             amount = amount["min"]
         # record the action
         self.history.append(state + (self.action_to_int(action),))
         return action, amount
->>>>>>> c6f893c6917339457f7522a3cc54ce89bd497f22
 
     def __choice_action(self, valid_actions):
         r = rand.random()
@@ -192,7 +124,7 @@ class QLearningPlayer(BasePokerPlayer):
             if winners[0]['uuid'] == self.uuid:
                 # player win the game
                 reward = winners[0]['stack'] - 100
-                hand_strength = 10
+                hand_strength = 20
             else:
                 reward = 100 - winners[0]['stack']
                 hand_strength = 0
