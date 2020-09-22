@@ -38,6 +38,9 @@ class QLearningPlayer(BasePokerPlayer):
         self.history = []
         self.training = training
 
+    def load_model(self):
+        self.Q = np.load(self.model_path)
+
     def set_action_ratio(self, fold_ratio, call_ratio, raise_ratio):
         ratio = [fold_ratio, call_ratio, raise_ratio]
         scaled_ratio = [1.0 * num / sum(ratio) for num in ratio]
@@ -65,10 +68,22 @@ class QLearningPlayer(BasePokerPlayer):
         state = int(self.hand_strength * 10), round_state['big_blind_pos'], int(
             round_state['seats'][self.player_id]['stack'] / 10)
 
-        # epsilon-greedy exploration
-        if rand.random() < self.epsilon:
-            choice = self.__choice_action(valid_actions)
+        if self.training:
+            # epsilon-greedy exploration
+            if rand.random() < self.epsilon:
+                choice = self.__choice_action(valid_actions)
+            else:
+                max_a = 0
+                max_q = -100000
+                for a in valid_actions:
+                    tmp_a = self.action_to_int(a['action'])
+                    i = state + (tmp_a,)
+                    if self.Q[i] > max_q:
+                        max_a = a
+                        max_q = self.Q[i]
+                choice = max_a
         else:
+            # no random action
             max_a = 0
             max_q = -100000
             for a in valid_actions:
@@ -82,7 +97,7 @@ class QLearningPlayer(BasePokerPlayer):
         action = choice["action"]
         amount = choice["amount"]
         if action == "raise":
-            # To simpilify the problem, raise only at minimum
+            # To simplify the problem, raise only at minimum
             amount = amount["min"]
         # record the action
         self.history.append(state + (self.action_to_int(action),))

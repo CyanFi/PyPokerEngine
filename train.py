@@ -8,39 +8,31 @@ from pypokerengine.api.game import setup_config, start_poker
 from my_players.RandomPlayer import RandomPlayer
 from my_players.QLearningPlayer import QLearningPlayer
 
-num_episode = 5000
-log_interval = 20
+num_episode = 100000
+log_interval = 5
+update_interval = 2000
 print('Training episode: {}.\nLog every {} episode.\n'.format(num_episode, log_interval))
-path0 = 'model/QLearningPlayer0.npy'
-path1 = 'model/QLearningPlayer1.npy'
+path0 = 'model/QLearningPlayer_1.npy'
 win = 0
 log = []
 flag = 0
 count = 0
 for i in range(0, num_episode):
-    flag = (flag + 1) % 2
-        for i in range(0,300):
-            count = count + 1
-            config = setup_config(max_round=100, initial_stack=100, small_blind_amount=5)
-            if flag == 0:
-                config.register_player(name="p1", algorithm=QLearningPlayer(path1, training=False))
-                config.register_player(name="p2", algorithm=QLearningPlayer(path0, training=True))
-                game_result = start_poker(config, verbose=0)
-                if game_result['players'][1]['stack'] > game_result['players'][0]['stack']:
-                    win += 1
-                if count % log_interval == 0:
-                    log.append([i + 1, win / count])
-                    print(count,' episode ',win / count)
-    
-            else:
-                config.register_player(name="p1", algorithm=QLearningPlayer(path1, training=True))
-                config.register_player(name="p2", algorithm=QLearningPlayer(path0, training=False))
-                game_result = start_poker(config, verbose=0)
-                if game_result['players'][1]['stack'] < game_result['players'][0]['stack']:
-                    win += 1
-                if count % log_interval == 0:
-                    log.append([i + 1, win / count])
-                    print(count,' episode ',win / count)
+    count = i + 1
+    config = setup_config(max_round=100, initial_stack=100, small_blind_amount=5)
+    # The first player isn't training, but update model parameters every 50 episode
+    config.register_player(name="p1", algorithm=QLearningPlayer(path0, training=False))
+    # THe second player is training
+    config.register_player(name="p2", algorithm=QLearningPlayer(path0, training=True))
+    game_result = start_poker(config, verbose=0)
+    if game_result['players'][1]['stack'] > game_result['players'][0]['stack']:
+        # if player 1 wins
+        win += 1
+    if count % update_interval == 0:
+        config.players_info[0]['algorithm'].load_model()
+    if count % log_interval == 0:
+        log.append([i + 1, win / count])
+        print(count, ' episode ', win / count)
 
 import matplotlib.pyplot as plt
 
