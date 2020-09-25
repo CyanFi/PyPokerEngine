@@ -12,7 +12,7 @@ from pypokerengine.utils.card_utils import gen_cards, estimate_hole_card_win_rat
 
 class QLearningPlayer(BasePokerPlayer):
 
-    def __init__(self, path, training):
+    def __init__(self, path, training,round_his_record):
         """
         Q: hand_strength, big_blind_pos, self.stack, action
         """
@@ -36,6 +36,7 @@ class QLearningPlayer(BasePokerPlayer):
         self.model_path = path
         self.history = []
         self.training = training
+        self.round_his_record = round_his_record
 
     def load_model(self):
         self.Q = np.load(self.model_path)
@@ -128,7 +129,11 @@ class QLearningPlayer(BasePokerPlayer):
                 reward = 100 - winners[0]['stack']
                 hand_strength = 0
             _h = hand_strength, round_state['big_blind_pos'], int(round_state['seats'][self.player_id]['stack'] / 10)
+            round_his_as_str = convert_round_history_to_string(self.history)
             self.history.append(_h + (None,))
+            with open(self.round_his_record,'a') as f:
+                f.write(round_his_as_str)
+                
 
             # reward all history actions
             for i in range(0, len(self.history) - 1):
@@ -140,3 +145,15 @@ class QLearningPlayer(BasePokerPlayer):
             self.history = []
             # save model
             np.save(self.model_path, self.Q)
+            
+            
+            
+            
+def convert_round_history_to_string(round_history_as_list_of_tuple):
+    string = ""
+    for i in round_history_as_list_of_tuple:
+        string = string + '#'
+        for j in i:
+            string = string + '$'
+            string = string + str(j)
+    return string
