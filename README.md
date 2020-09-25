@@ -58,5 +58,21 @@ agent要做出下列一個 action由下列两个部分组成：：
     + `FOLD` 放棄 GG (不下注放棄)
 + `amount`: 當`action`為 `RAISE` 或者`CALL`時, 此项代表下注的金额
 
+## CSE Server Help
+```sh
+# connect gate way
+ssh yzhuang9@gw.cse.cuhk.edu.hk
+# type password
+# connect linux9 (9-16 都可以)
+ssh linux9
+# project folder, storage: 1TB
+cd /research/dept8/estr3108/yzhuang9
+# connect gpu, --gres=gpu后面的数为gpu数量，gpu39为gpu集群号码
+srun --gres=gpu:1 -w gpu39 --pty bash
+# exit
+exit 
+```
+### GPU list
+Check with CU VPN [LINK](https://i.cse.cuhk.edu.hk/technical/gpgpu-hpc-service/slurm/)
 ## Acknowledgement
 This project is based on [PyPokerEngine](https://github.com/ishikota/PyPokerEngine), detailed docs on env could be found at its [doc site](https://ishikota.github.io/PyPokerEngine/).

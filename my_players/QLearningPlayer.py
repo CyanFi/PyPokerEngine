@@ -3,7 +3,7 @@
 #    @Author:  Qingy
 #    @Email:   qingyuge006@gmail.com
 #    @File:    QLearningPlayer.py
-#    @Project: pypokerengine
+#    @Project: nlh-poker
 from pypokerengine.players import BasePokerPlayer
 import random as rand
 import numpy as np
@@ -51,13 +51,11 @@ class QLearningPlayer(BasePokerPlayer):
         convert type action to int
         """
         if action == 'fold':
-            return 1
-        if action == 'check':
             return 0
         if action == 'call':
-            return 2
+            return 1
         if action == 'raise':
-            return 3
+            return 2
 
     def declare_action(self, valid_actions, hole_card, round_state):
         self.hand_strength = estimate_hole_card_win_rate(nb_simulation=self.num_simulation,
