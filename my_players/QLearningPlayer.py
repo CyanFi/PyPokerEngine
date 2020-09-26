@@ -133,9 +133,12 @@ class QLearningPlayer(BasePokerPlayer):
             self.history.append(_h + (None,))
 
             # reward all history actions
-            geometric_array = np.logspace(1, len(self.history) - 1, len(self.history) - 1, base=0.5)
-            geometric_array[len(self.history) - 1] = geometric_array[len(self.history) - 2]
-            reward_array = reward * geometric_array
+            if len(self.history) > 2:
+                geometric_array = np.logspace(1, len(self.history) - 1, len(self.history) - 1, base=0.5)
+                geometric_array[len(self.history) - 2] = geometric_array[len(self.history) - 3]
+                reward_array = reward * geometric_array
+            else:
+                reward_array = [reward]
             # reward /= len(self.history)
             for i in range(0, len(self.history) - 1):
                 h = self.history[i]
