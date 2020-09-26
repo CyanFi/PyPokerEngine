@@ -144,11 +144,14 @@ class QLearningPlayer(BasePokerPlayer):
             self.history.append(_h + (None,))
 
             # reward all history actions
-            reward /= len(self.history)
+            geometric_array = np.logspace(1, len(self.history) - 1, len(self.history) - 1, base=0.5)
+            geometric_array[len(self.history) - 1] = geometric_array[len(self.history) - 2]
+            reward_array = reward * geometric_array
+            # reward /= len(self.history)
             for i in range(0, len(self.history) - 1):
                 h = self.history[i]
                 next_h = self.history[i + 1]
-                learning_target = reward + self.gamma * np.max(self.Q[next_h[0], :]) - self.Q[h]
+                learning_target = reward_array[i] + self.gamma * np.max(self.Q[next_h[0], :]) - self.Q[h]
                 self.Q[h] = self.Q[h] + self.learning_rate * learning_target
             # clear history
             self.history = []
