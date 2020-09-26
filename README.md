@@ -16,8 +16,8 @@ python test.py
 + Random Player (from PyPokerEngine)
 
 ## Train Result
-![Q-Learning Agent](log/ql1.png)
-@Para: gamma=0.9, epsilon=0.1, learning_rate=0.05, num of simulation=100
+![Q-Learning Agent](log/ql0.png)
+@Para: gamma=0.9, epsilon decays, learning_rate=0.01, num of simulation=100
 
 ## Coming features
 ### Training features
