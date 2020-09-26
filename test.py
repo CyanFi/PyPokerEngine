@@ -8,14 +8,16 @@ from pypokerengine.api.game import setup_config, start_poker
 from my_players.RandomPlayer import RandomPlayer
 from my_players.QLearningPlayer import QLearningPlayer
 from my_players.HumanPlayer import ConsolePlayer
-num_episode = 300
+from my_players.HonestPlayer import HonestPlayer
+
+num_episode = 500
 win = 0
-path0 = 'model/ql2.npy'
+path0 = 'model/ql_z.npy'
 count = 0
 log_interval = 10
 log = []
 for i in range(0, num_episode):
-    count = count+1
+    count = count + 1
     config = setup_config(max_round=100, initial_stack=100, small_blind_amount=5)
     config.register_player(name="p1", algorithm=RandomPlayer())
     config.register_player(name="p2", algorithm=QLearningPlayer(path0, training=False))
