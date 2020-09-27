@@ -11,7 +11,7 @@ num_episode = 5000
 log_interval = 10
 # update_interval = 500
 print('Training episode: {}.\nLog every {} episode.\n'.format(num_episode, log_interval))
-path = 'model/testing.npy'
+path = 'model/ql_g.npy'
 win = 0
 log = []
 

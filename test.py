@@ -12,7 +12,7 @@ from my_players.HonestPlayer import HonestPlayer
 
 num_episode = 500
 win = 0
-path0 = 'model/testing.npy'
+path0 = 'model/ql_g.npy'
 count = 0
 log_interval = 10
 log = []
