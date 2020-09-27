@@ -12,7 +12,7 @@ from pypokerengine.utils.card_utils import gen_cards, estimate_hole_card_win_rat
 
 class QLearningPlayer(BasePokerPlayer):
 
-    def __init__(self, path, training,round_his_record):
+    def __init__(self, path, training):
         """
         Q: hand_strength, big_blind_pos, self.stack, action
         """
@@ -23,20 +23,22 @@ class QLearningPlayer(BasePokerPlayer):
             self.Q = np.load(path)
         except:
             # initialize Q table
-            self.Q = np.zeros((21, 2, 21, 4))
+            self.Q = np.zeros((11, 2, 21, 3))
             pass
         # hyper-parameter for q learning
         self.epsilon = 0.1
         self.gamma = 0.9
-        self.learning_rate = 0.05
+        self.learning_rate = 0.01
         self.num_simulation = 100
         # training-required game attribute
         self.hand_strength = 0
+        self.stack = 100
         self.hole_card = None
         self.model_path = path
         self.history = []
         self.training = training
-        self.round_his_record = round_his_record
+        self.oponent = None
+        self.cur_stack = 100
 
     def load_model(self):
         self.Q = np.load(self.model_path)
@@ -52,29 +54,29 @@ class QLearningPlayer(BasePokerPlayer):
         convert type action to int
         """
         if action == 'fold':
-            return 1
-        if action == 'check':
-            return 0
-        if action == 'call':
             return 2
+        if action == 'call':
+            return 1
         if action == 'raise':
-            return 3
+            return 0
 
     def declare_action(self, valid_actions, hole_card, round_state):
         self.hand_strength = estimate_hole_card_win_rate(nb_simulation=self.num_simulation,
                                                          nb_player=self.nb_player,
                                                          hole_card=gen_cards(hole_card),
                                                          community_card=gen_cards(round_state['community_card']))
-        state = int(self.hand_strength * 20), round_state['big_blind_pos'], int(
+        state = int(self.hand_strength * 10), round_state['big_blind_pos'], int(
             round_state['seats'][self.player_id]['stack'] / 10)
-
+        final_valid_actions=valid_actions
+        if final_valid_actions[2]['amount']['max'] == -1 or self.oponent.cur_stack == 0:
+            final_valid_actions.pop(2)
         # epsilon-greedy exploration
-        if self.training and rand.random() < self.epsilon:
-            choice = self.__choice_action(valid_actions)
+        if self.training and rand.random() < self.epsilon and self.training:
+            choice = self.__choice_action(final_valid_actions)
         else:
             max_a = 0
             max_q = -100000
-            for a in valid_actions:
+            for a in final_valid_actions:
                 tmp_a = self.action_to_int(a['action'])
                 i = state + (tmp_a,)
                 if self.Q[i] > max_q:
@@ -89,16 +91,23 @@ class QLearningPlayer(BasePokerPlayer):
             amount = amount["min"]
         # record the action
         self.history.append(state + (self.action_to_int(action),))
+        
         return action, amount
 
     def __choice_action(self, valid_actions):
-        r = rand.random()
-        if r <= self.fold_ratio:
-            return valid_actions[0]
-        elif r <= self.call_ratio:
-            return valid_actions[1]
+        if len(valid_actions)==3:
+            r = rand.random()
+            if r <= self.fold_ratio:
+                return valid_actions[0]
+            elif r <= self.call_ratio:
+                return valid_actions[1]
+            else:
+                return valid_actions[2]
         else:
-            return valid_actions[2]
+            if rand.random()<0.5:
+                return  valid_actions[0]
+            else:
+                return valid_actions[1]
 
     def receive_game_start_message(self, game_info):
         self.nb_player = game_info['player_num']
@@ -114,7 +123,7 @@ class QLearningPlayer(BasePokerPlayer):
         pass
 
     def receive_game_update_message(self, new_action, round_state):
-        pass
+        self.cur_stack = round_state['seats'][self.player_id]['stack']
 
     def receive_round_result_message(self, winners, hand_info, round_state):
         if self.history and self.training:
@@ -123,19 +132,19 @@ class QLearningPlayer(BasePokerPlayer):
             # define the reward and append the last action to history
             if winners[0]['uuid'] == self.uuid:
                 # player win the game
-                reward = winners[0]['stack'] - 100
-                hand_strength = 20
+                reward = winners[0]['stack'] - self.stack
+                self.stack = winners[0]['stack']
+                hand_strength = 10
             else:
-                reward = 100 - winners[0]['stack']
+                new_stack = 200 - winners[0]['stack']
+                reward = new_stack - self.stack
+                self.stack = new_stack
                 hand_strength = 0
             _h = hand_strength, round_state['big_blind_pos'], int(round_state['seats'][self.player_id]['stack'] / 10)
-            round_his_as_str = convert_round_history_to_string(self.history)
             self.history.append(_h + (None,))
-            with open(self.round_his_record,'a') as f:
-                f.write(round_his_as_str)
-                
 
             # reward all history actions
+            reward /= len(self.history)
             for i in range(0, len(self.history) - 1):
                 h = self.history[i]
                 next_h = self.history[i + 1]
@@ -145,15 +154,3 @@ class QLearningPlayer(BasePokerPlayer):
             self.history = []
             # save model
             np.save(self.model_path, self.Q)
-            
-            
-            
-            
-def convert_round_history_to_string(round_history_as_list_of_tuple):
-    string = ""
-    for i in round_history_as_list_of_tuple:
-        string = string + '#'
-        for j in i:
-            string = string + '$'
-            string = string + str(j)
-    return string
