@@ -17,7 +17,7 @@ update_interval = 1000
 # DQN model hyper-parameters: epsilon variables
 epsilon_start = 1.0
 epsilon_final = 0.01
-epsilon_decay = num_episode/1.5
+epsilon_decay = 10000
 epsilon_decrease = lambda episode_idx: epsilon_final + (epsilon_start - epsilon_final) * math.exp(
     -1. * episode_idx / epsilon_decay)
 
@@ -43,9 +43,9 @@ for i in range(0, num_episode):
     # update episode num
     config.players_info[1]['algorithm'].episode = count
     if count == 1:
-        _m=config.players_info[1]['algorithm'].declare_memory()
+        _m = config.players_info[1]['algorithm'].declare_memory()
     else:
-        config.players_info[1]['algorithm'].memory=_m
+        config.players_info[1]['algorithm'].memory = _m
     game_result = start_poker(config, verbose=0)
 
     if game_result['players'][1]['stack'] > game_result['players'][0]['stack']:
