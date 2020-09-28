@@ -12,18 +12,17 @@ import math
 
 num_episode = 100000
 log_interval = 100
-update_interval = 1000
 
 # DQN model hyper-parameters: epsilon variables
 epsilon_start = 1.0
 epsilon_final = 0.01
 epsilon_decay = 10000
-epsilon_decrease = lambda episode_idx: 0.0
+epsilon_decrease = lambda episode_idx: 0.00
 
 print('Training episode: {}.\nLog every {} episode.\n'.format(num_episode, log_interval))
 # model path
-model_path = 'model/DQN2.dump'
-optimizer_path = 'model/DQN2_optim.dump'
+model_path = 'model/DQN5.dump'
+optimizer_path = 'model/DQN5_optim.dump'
 
 win = 0
 log = []

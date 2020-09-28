@@ -19,7 +19,7 @@ learning_rate = 1e-3
 gamma = 0.9
 exp_replay_size = 10000
 epsilon = 0.1
-learn_start = 500
+learn_start = 100
 target_net_update_freq = 500
 
 
@@ -49,15 +49,18 @@ class DQN(nn.Module):
         self.input_shape = input_shape
         self.num_actions = num_actions
 
-        self.fc1 = nn.Linear(self.input_shape[0], 512)
-        self.fc2 = nn.Linear(512, 128)
-        self.fc3 = nn.Linear(128, self.num_actions)
+        self.fc1 = nn.Linear(self.input_shape[0], 1024)
+        self.fc2 = nn.Linear(1024, 512)
+        self.fc3 = nn.Linear(512, 128)
+        self.fc4 = nn.Linear(128, self.num_actions)
 
     def forward(self, x):
         x = F.relu(self.fc1(x))
         x = F.relu(self.fc2(x))
-        x = self.fc3(x)
+        x = F.relu(self.fc3(x))
+        x = self.fc4(x)
         return x
+
 
 class DQNPlayer(QLearningPlayer):
 
@@ -91,10 +94,16 @@ class DQNPlayer(QLearningPlayer):
         self.num_actions = 3
         self.num_feats = (8,)
         self.declare_networks()
-        self.model.load_state_dict(torch.load(self.model_path))
+        try:
+            self.model.load_state_dict(torch.load(self.model_path))
+        except:
+            pass
         self.target_model.load_state_dict(self.model.state_dict())
         self.optimizer = optim.Adam(self.model.parameters(), lr=self.learning_rate)
-        self.optimizer.load_state_dict(torch.load(self.optimizer_path))
+        try:
+            self.optimizer.load_state_dict(torch.load(self.optimizer_path))
+        except:
+            pass
         self.losses = []
         self.sigma_parameter_mag = []
         # move models to correct device
@@ -309,7 +318,7 @@ class DQNPlayer(QLearningPlayer):
                 self.stack = new_stack
             # average reward
             reward /= len(self.history)
-            # append the last state to history
+
             if len(round_state['action_histories']) == 1:
                 community_card = []
             elif len(round_state['action_histories']) == 2:
@@ -320,6 +329,7 @@ class DQNPlayer(QLearningPlayer):
                 community_card = self.community_card_to_tuple(round_state['community_card'][:5])
             last_state = (self.hole_card[0], self.hole_card[1]) + community_card + (
                 round_state['seats'][self.player_id]['stack'],)
+            # append the last state to history
             self.history.append(last_state + (None,))
 
             # update using reward

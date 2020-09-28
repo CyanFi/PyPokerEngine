@@ -11,8 +11,8 @@ from my_players.HumanPlayer import ConsolePlayer
 from my_players.DQNPlayer import DQNPlayer
 num_episode = 1000
 win = 0
-model_path = 'model/DQN2.dump'
-optimizer_path = 'model/DQN2_optim.dump'
+model_path = 'model/DQN5.dump'
+optimizer_path = 'model/DQN5_optim.dump'
 count = 0
 log_interval = 10
 log = []

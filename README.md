@@ -11,27 +11,22 @@ python train.py
 # Test a model or just play a game
 python test.py
 ```
-## Agent list:
-+ Q-Learning Agent
-+ Random Player (from PyPokerEngine)
-
+## Agent:
++ DQN agent
 ## Train Result
-![Q-Learning Agent](log/ql1.png)
-@Para: gamma=0.9, epsilon=0.1, learning_rate=0.05, num of simulation=100
+vs random: winning rate = 0.94
 
 ## Coming features
-### Training features
-+ multi-processing to increase training speed
-+ parse argument from command line or yaml
+### known issue
++ epsilon非0时会crash
++ 限制DQN agent的行为（即手动加上不能raise时取消raise，能check时不fold）后胜率过不了0.5
 ### Algorithm improvement
 + 训练的时候自己和自己打 （Su）
-+ 将自己的手牌和公共牌面作为state训练 （Huang）
 + normalize state （Su）
 + 预测对手的action（预测对手的state） （Huang）
 + 计算自己的胜率 （Huang）
 + 计算reward的时候对cycle 和round进行 weighted sum，作为一个超参数去调（Su）
 + test的时候和自己打或者公认的ai打
-+ 纠正epsilon（epsilon应当随着局数的增加而减小）（Su）
 ### More Models
 + a2c
 + a3c
