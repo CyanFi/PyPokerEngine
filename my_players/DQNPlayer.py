@@ -15,12 +15,13 @@ import torch.nn.functional as F
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 # hyper-parameters
-batch_size = 32
+batch_size = 10
 learning_rate = 1e-4
 gamma = 0.9
-exp_replay_size = 100000
+exp_replay_size = 5000
 epsilon = 0.1
-learn_start = 0
+learn_start = 50
+target_net_update_freq = 500
 
 
 class ExperienceReplayMemory:
@@ -42,69 +43,68 @@ class ExperienceReplayMemory:
 
 # Deep Q Network
 class DQN(nn.Module):
+    """
+    input_shape:(channels, height, width)
+    """
+
     def __init__(self, input_shape, num_actions):
         super(DQN, self).__init__()
 
         self.input_shape = input_shape
         self.num_actions = num_actions
 
-        self.conv1 = nn.Conv2d(self.input_shape[0], 32, kernel_size=8, stride=4)
-        self.conv2 = nn.Conv2d(32, 64, kernel_size=4, stride=2)
-        self.conv3 = nn.Conv2d(64, 64, kernel_size=3, stride=1)
-
-        self.fc1 = nn.Linear(self.feature_size(), 512)
-        self.fc2 = nn.Linear(512, self.num_actions)
+        self.fc1 = nn.Linear(self.input_shape[0], 215)
+        self.fc2 = nn.Linear(512, 128)
+        self.fc3 = nn.Linear(128, self.num_actions)
 
     def forward(self, x):
-        x = F.relu(self.conv1(x))
-        x = F.relu(self.conv2(x))
-        x = F.relu(self.conv3(x))
-        x = x.view(x.size(0), -1)
         x = F.relu(self.fc1(x))
-        x = self.fc2(x)
-
+        x = F.relu(self.fc2(x))
+        x = self.fc3(x)
         return x
 
-    def feature_size(self):
-        return self.conv3(self.conv2(self.conv1(torch.zeros(1, *self.input_shape)))).view(1, -1).size(1)
+    # def feature_size(self):
+    #     return self.conv3(self.conv2(self.conv1(torch.zeros(1,*self.input_shape)))).view(1, -1).size(1)
 
 
 class DQNPlayer(QLearningPlayer):
 
-    def __init__(self, path, training):
+    def __init__(self, model_path, optimizer_path, training):
         """
         State: hole_card, community_card, self.stack, opponent_player.action
         """
-        # training device: cpu / cuda
+
+        # training device: cpu > cuda
         self.device = device
         self.fold_ratio = self.raise_ratio = self.call_ratio = 1.0 / 3
         self.nb_player = self.player_id = None
 
-        # hyper-parameter for q learning
+        # hyper-parameter for Deep Q Learning
         self.epsilon = epsilon
         self.gamma = gamma
         self.learning_rate = learning_rate
         self.experience_replay_size = exp_replay_size
         self.batch_size = batch_size
         self.learn_start = learn_start
+        self.target_net_update_freq = target_net_update_freq
         # training-required game attribute
-        self.hand_strength = 0
+        self.stack = 100
         self.hole_card = None
-        self.model_path = path
+        self.model_path = model_path
+        self.optimizer_path = optimizer_path
         self.update_count = 0
         self.history = []
         self.training = training
         # declare DQN model
         self.num_actions = 3
         # TODO, input shape
-        self.num_feats = None
+        self.num_feats = (8,)
         self.declare_networks()
         self.target_model.load_state_dict(self.model.state_dict())
         self.optimizer = optim.Adam(self.model.parameters(), lr=self.learning_rate)
         self.losses = []
-        self.rewards = []
         self.sigma_parameter_mag = []
-        # move to correct device
+        # move models to correct device
         self.model = self.model.to(self.device)
         self.target_model.to(self.device)
         if self.training:
@@ -115,8 +115,7 @@ class DQNPlayer(QLearningPlayer):
             self.target_model.eval()
 
         self.update_count = 0
-
-        self.declare_memory()
+        self.episode = 0
 
     def declare_networks(self):
         self.model = DQN(self.num_feats, self.num_actions)
@@ -124,6 +123,7 @@ class DQNPlayer(QLearningPlayer):
 
     def declare_memory(self):
         self.memory = ExperienceReplayMemory(self.experience_replay_size)
+        return self.memory
 
     def append_to_replay(self, s, a, r, s_):
         self.memory.push((s, a, r, s_))
@@ -172,6 +172,7 @@ class DQNPlayer(QLearningPlayer):
 
         # target
         with torch.no_grad():
+            # To prevent tracking history of gradient
             max_next_q_values = torch.zeros(self.batch_size, device=self.device, dtype=torch.float).unsqueeze(dim=1)
             if not empty_next_state_values:
                 max_next_action = self.get_max_next_state_action(non_final_next_states)
@@ -184,13 +185,13 @@ class DQNPlayer(QLearningPlayer):
 
         return loss
 
-    def update(self, s, a, r, s_, frame=0):
-        if self.training:
+    def update(self, s, a, r, s_, episode=0):
+        if not self.training:
             return None
 
         self.append_to_replay(s, a, r, s_)
 
-        if frame < self.learn_start:
+        if episode < self.learn_start:
             return None
 
         batch_vars = self.prep_minibatch()
@@ -208,18 +209,11 @@ class DQNPlayer(QLearningPlayer):
         self.save_loss(loss.item())
         self.save_sigma_param_magnitudes()
 
-    def get_action(self, s, eps=0.1):
-        with torch.no_grad():
-            if np.random.random() >= eps or self.training:
-                X = torch.tensor([s], device=self.device, dtype=torch.float)
-                a = self.model(X).max(1)[1].view(1, 1)
-                return a.item()
-            else:
-                return np.random.randint(0, self.num_actions)
-
     def update_target_model(self):
+        """
+        to use in fix-target
+        """
         self.update_count += 1
-        # TODO
         self.update_count = self.update_count % self.target_net_update_freq
         if self.update_count == 0:
             self.target_model.load_state_dict(self.model.state_dict())
@@ -231,36 +225,69 @@ class DQNPlayer(QLearningPlayer):
         cond = (x.abs() < 1.0).to(torch.float)
         return 0.5 * x.pow(2) * cond + (x.abs() - 0.5) * (1 - cond)
 
+    @staticmethod
+    def card_to_int(card):
+        """convert card to int, card[0]:花色, card[1]:rank"""
+        suit_map = {'H': 0, 'S': 1, 'D': 2, 'C': 3}
+        rank_map = {'2': 0, '3': 1, '4': 2, '5': 3, '6': 4, '7': 5, '8': 6, '9': 7, 'T': 8, 'J': 9, 'Q': 10, 'K': 11,
+                    'A': 12}
+        return suit_map[card[0]] * 13 + rank_map[card[1]]
 
-    def set_action_ratio(self, fold_ratio, call_ratio, raise_ratio):
-        ratio = [fold_ratio, call_ratio, raise_ratio]
-        scaled_ratio = [1.0 * num / sum(ratio) for num in ratio]
-        self.fold_ratio, self.call_ratio, self.raise_ratio = scaled_ratio
+    def community_card_to_tuple(self, community_card):
+        """
+        :param community_card: round_state['community_card']
+        :return: tuple of int (0..52)
+        """
+        new_community_card = []
+        for i in range(0, len(community_card)):
+            new_community_card.append(self.card_to_int(community_card[i]))
+        for i in range(0, 5 - len(community_card)):
+            # if community card num <5, append 52 to fill out the rest
+            new_community_card.append(52)
+        return tuple(new_community_card)
 
+    def eps_greedy_policy(self, s, eps=0.1):
+        with torch.no_grad():
+            if np.random.random() >= eps or not self.training:
+                X = torch.tensor([s], device=self.device, dtype=torch.float)
+                a = self.model(X).max(1)[1].view(1, 1)
+                return a.item()
+            else:
+                return np.random.randint(0, self.num_actions)
 
     def declare_action(self, valid_actions, hole_card, round_state):
-        state = int(self.hand_strength * 20), round_state['big_blind_pos'], int(
-            round_state['seats'][self.player_id]['stack'] / 10)
+        """
+        state: hole_card1, hold_card2, community_card, self.stack
+        """
+        # preprocess variable in states
+        hole_card_1 = self.card_to_int(hole_card[0])
+        hole_card_2 = self.card_to_int(hole_card[1])
+        self.hole_card = (hole_card_1, hole_card_2)
+        community_card = self.community_card_to_tuple(round_state['community_card'])
 
+        state = self.hole_card + community_card + (int(round_state['seats'][self.player_id]['stack']),)
+        action = self.eps_greedy_policy(state, self.epsilon)
+        action = valid_actions[action]['action']
         # epsilon-greedy exploration
-        if self.training and rand.random() < self.epsilon:
-            choice = self.__choice_action(valid_actions)
-        else:
-            max_a = 0
-            max_q = -100000
-            for a in valid_actions:
-                tmp_a = self.action_to_int(a['action'])
-                i = state + (tmp_a,)
-                if self.Q[i] > max_q:
-                    max_a = a
-                    max_q = self.Q[i]
-            choice = max_a
-
-        action = choice["action"]
-        amount = choice["amount"]
+        # if self.training and rand.random() < self.epsilon:
+        #     choice = self.__choice_action(valid_actions)
+        # else:
+        #     max_a = 0
+        #     max_q = -100000
+        #     for a in valid_actions:
+        #         tmp_a = self.action_to_int(a['action'])
+        #         i = state + (tmp_a,)
+        #         if self.Q[i] > max_q:
+        #             max_a = a
+        #             max_q = self.Q[i]
+        #     choice = max_a
         if action == "raise":
             # To simplify the problem, raise only at minimum
-            amount = amount["min"]
+            amount = valid_actions[2]["amount"]["min"]
+        elif action == "call":
+            amount = valid_actions[1]["amount"]
+        else:
+            amount = 0
         # record the action
         self.history.append(state + (self.action_to_int(action),))
         return action, amount
@@ -288,21 +315,29 @@ class DQNPlayer(QLearningPlayer):
             # define the reward and append the last action to history
             if winners[0]['uuid'] == self.uuid:
                 # player win the game
-                reward = winners[0]['stack'] - 100
-                hand_strength = 20
+                reward = winners[0]['stack'] - self.stack
+                self.stack = winners[0]['stack']
             else:
-                reward = 100 - winners[0]['stack']
-                hand_strength = 0
-            _h = hand_strength, round_state['big_blind_pos'], int(round_state['seats'][self.player_id]['stack'] / 10)
-            self.history.append(_h + (None,))
+                new_stack = 200 - winners[0]['stack']
+                reward = new_stack - self.stack
+                self.stack = new_stack
+            # average reward
+            reward /= len(self.history)
+            # append the last state to history
+            last_state = (self.hole_card[0], self.hole_card[1]) +\
+                         self.community_card_to_tuple(round_state['community_card']) + (
+                             round_state['seats'][self.player_id]['stack'],)
+            self.history.append(last_state + (None,))
 
-            # reward all history actions
+            # update using reward
             for i in range(0, len(self.history) - 1):
                 h = self.history[i]
                 next_h = self.history[i + 1]
-                learning_target = reward + self.gamma * np.max(self.Q[next_h[0], :]) - self.Q[h]
-                self.Q[h] = self.Q[h] + self.learning_rate * learning_target
+                ##TODO
+                self.update(h[:-1], h[-1], reward, next_h[:-1], self.episode)
             # clear history
             self.history = []
-            # save model
-            np.save(self.model_path, self.Q)
+
+    def save_model(self):
+        torch.save(self.model.state_dict(), self.model_path)
+        torch.save(self.optimizer.state_dict(), self.optimizer_path)
