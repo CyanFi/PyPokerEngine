@@ -18,13 +18,12 @@ update_interval = 1000
 epsilon_start = 1.0
 epsilon_final = 0.01
 epsilon_decay = 10000
-epsilon_decrease = lambda episode_idx: epsilon_final + (epsilon_start - epsilon_final) * math.exp(
-    -1. * episode_idx / epsilon_decay)
+epsilon_decrease = lambda episode_idx: 0.0
 
 print('Training episode: {}.\nLog every {} episode.\n'.format(num_episode, log_interval))
 # model path
-model_path = 'model/DQN1.dump'
-optimizer_path = 'model/DQN1_optim.dump'
+model_path = 'model/DQN2.dump'
+optimizer_path = 'model/DQN2_optim.dump'
 
 win = 0
 log = []

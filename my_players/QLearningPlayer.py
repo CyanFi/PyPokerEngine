@@ -65,7 +65,7 @@ class QLearningPlayer(BasePokerPlayer):
                                                          community_card=gen_cards(round_state['community_card']))
         state = int(self.hand_strength * 10), round_state['big_blind_pos'], int(
             round_state['seats'][self.player_id]['stack'] / 10)
-        final_valid_actions=valid_actions
+        final_valid_actions = valid_actions
         if final_valid_actions[2]['amount']['max'] == -1:
             final_valid_actions.pop(2)
         # epsilon-greedy exploration
@@ -92,7 +92,7 @@ class QLearningPlayer(BasePokerPlayer):
         return action, amount
 
     def __choice_action(self, valid_actions):
-        if len(valid_actions)==3:
+        if len(valid_actions) == 3:
             r = rand.random()
             if r <= self.fold_ratio:
                 return valid_actions[0]
@@ -101,8 +101,8 @@ class QLearningPlayer(BasePokerPlayer):
             else:
                 return valid_actions[2]
         else:
-            if rand.random()<0.5:
-                return  valid_actions[0]
+            if rand.random() < 0.5:
+                return valid_actions[0]
             else:
                 return valid_actions[1]
 

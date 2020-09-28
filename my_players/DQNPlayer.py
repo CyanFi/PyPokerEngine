@@ -14,13 +14,13 @@ import torch.optim as optim
 import torch.nn.functional as F
 
 # hyper-parameters
-batch_size = 200
-learning_rate = 1e-4
+batch_size = 32
+learning_rate = 1e-3
 gamma = 0.9
 exp_replay_size = 10000
 epsilon = 0.1
 learn_start = 500
-target_net_update_freq = 1000
+target_net_update_freq = 500
 
 
 class ExperienceReplayMemory:
@@ -42,9 +42,6 @@ class ExperienceReplayMemory:
 
 # Deep Q Network
 class DQN(nn.Module):
-    """
-    input_shape:(channels, height, width)
-    """
 
     def __init__(self, input_shape, num_actions):
         super(DQN, self).__init__()
@@ -61,10 +58,6 @@ class DQN(nn.Module):
         x = F.relu(self.fc2(x))
         x = self.fc3(x)
         return x
-
-    # def feature_size(self):
-    #     return self.conv3(self.conv2(self.conv1(torch.zeros(1,*self.input_shape)))).view(1, -1).size(1)
-
 
 class DQNPlayer(QLearningPlayer):
 
@@ -96,11 +89,12 @@ class DQNPlayer(QLearningPlayer):
         self.training = training
         # declare DQN model
         self.num_actions = 3
-        # TODO, input shape
         self.num_feats = (8,)
         self.declare_networks()
+        self.model.load_state_dict(torch.load(self.model_path))
         self.target_model.load_state_dict(self.model.state_dict())
         self.optimizer = optim.Adam(self.model.parameters(), lr=self.learning_rate)
+        self.optimizer.load_state_dict(torch.load(self.optimizer_path))
         self.losses = []
         self.sigma_parameter_mag = []
         # move models to correct device
@@ -245,18 +239,23 @@ class DQNPlayer(QLearningPlayer):
             new_community_card.append(52)
         return tuple(new_community_card)
 
-    def eps_greedy_policy(self, s, eps=0.1):
+    def eps_greedy_policy(self, s, opponent, valid_actions, eps=0.1):
         with torch.no_grad():
             if np.random.random() >= eps or not self.training:
                 X = torch.tensor([s], device=self.device, dtype=torch.float)
                 a = self.model(X).max(1)[1].view(1, 1)
                 return a.item()
             else:
-                return np.random.randint(0, self.num_actions)
+                action_list = np.array([0, 1, 2])
+                if opponent['state'] == 'allin' or valid_actions[2]['amount']['max'] == -1:
+                    action_list = np.delete(action_list, 2)
+                if valid_actions[1]['amount'] == 0:
+                    action_list = np.delete(action_list, 0)
+                return np.random.choice(action_list, 1).item()
 
     def declare_action(self, valid_actions, hole_card, round_state):
         """
-        state: hole_card1, hold_card2, community_card, self.stack
+        state: hole_card, community_card, self.stack
         """
         # preprocess variable in states
         hole_card_1 = self.card_to_int(hole_card[0])
@@ -265,21 +264,9 @@ class DQNPlayer(QLearningPlayer):
         community_card = self.community_card_to_tuple(round_state['community_card'])
 
         state = self.hole_card + community_card + (int(round_state['seats'][self.player_id]['stack']),)
-        action = self.eps_greedy_policy(state, self.epsilon)
+        action = self.eps_greedy_policy(state, round_state['seats'][(self.player_id + 1) % 2], valid_actions,
+                                        self.epsilon)
         action = valid_actions[action]['action']
-        # epsilon-greedy exploration
-        # if self.training and rand.random() < self.epsilon:
-        #     choice = self.__choice_action(valid_actions)
-        # else:
-        #     max_a = 0
-        #     max_q = -100000
-        #     for a in valid_actions:
-        #         tmp_a = self.action_to_int(a['action'])
-        #         i = state + (tmp_a,)
-        #         if self.Q[i] > max_q:
-        #             max_a = a
-        #             max_q = self.Q[i]
-        #     choice = max_a
         if action == "raise":
             # To simplify the problem, raise only at minimum
             amount = valid_actions[2]["amount"]["min"]
@@ -308,7 +295,7 @@ class DQNPlayer(QLearningPlayer):
         pass
 
     def receive_round_result_message(self, winners, hand_info, round_state):
-        if self.history and self.training:
+        if len(self.history) >= 1 and self.training:
             # if player has declared some action before
 
             # define the reward and append the last action to history
@@ -323,16 +310,22 @@ class DQNPlayer(QLearningPlayer):
             # average reward
             reward /= len(self.history)
             # append the last state to history
-            last_state = (self.hole_card[0], self.hole_card[1]) +\
-                         self.community_card_to_tuple(round_state['community_card']) + (
-                             round_state['seats'][self.player_id]['stack'],)
+            if len(round_state['action_histories']) == 1:
+                community_card = []
+            elif len(round_state['action_histories']) == 2:
+                community_card = self.community_card_to_tuple(round_state['community_card'][:3])
+            elif len(round_state['action_histories']) == 3:
+                community_card = self.community_card_to_tuple(round_state['community_card'][:4])
+            elif len(round_state['action_histories']) == 4:
+                community_card = self.community_card_to_tuple(round_state['community_card'][:5])
+            last_state = (self.hole_card[0], self.hole_card[1]) + community_card + (
+                round_state['seats'][self.player_id]['stack'],)
             self.history.append(last_state + (None,))
 
             # update using reward
             for i in range(0, len(self.history) - 1):
                 h = self.history[i]
                 next_h = self.history[i + 1]
-                ##TODO
                 self.update(h[:-1], h[-1], reward, next_h[:-1], self.episode)
             # clear history
             self.history = []
