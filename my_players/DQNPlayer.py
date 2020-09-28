@@ -13,7 +13,6 @@ import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 # hyper-parameters
 batch_size = 200
 learning_rate = 1e-4
@@ -75,7 +74,7 @@ class DQNPlayer(QLearningPlayer):
         """
 
         # training device: cpu > cuda
-        self.device = device
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.fold_ratio = self.raise_ratio = self.call_ratio = 1.0 / 3
         self.nb_player = self.player_id = None
 

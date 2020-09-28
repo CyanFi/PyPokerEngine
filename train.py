@@ -44,6 +44,7 @@ for i in range(0, num_episode):
     config.players_info[1]['algorithm'].episode = count
     if count == 1:
         _m = config.players_info[1]['algorithm'].declare_memory()
+        print("Device:", config.players_info[1]['algorithm'].device)
     else:
         config.players_info[1]['algorithm'].memory = _m
     game_result = start_poker(config, verbose=0)
