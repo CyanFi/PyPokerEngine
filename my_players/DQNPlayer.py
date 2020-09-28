@@ -15,13 +15,13 @@ import torch.nn.functional as F
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 # hyper-parameters
-batch_size = 10
+batch_size = 200
 learning_rate = 1e-4
 gamma = 0.9
-exp_replay_size = 5000
+exp_replay_size = 10000
 epsilon = 0.1
-learn_start = 50
-target_net_update_freq = 500
+learn_start = 500
+target_net_update_freq = 1000
 
 
 class ExperienceReplayMemory:
@@ -53,7 +53,7 @@ class DQN(nn.Module):
         self.input_shape = input_shape
         self.num_actions = num_actions
 
-        self.fc1 = nn.Linear(self.input_shape[0], 215)
+        self.fc1 = nn.Linear(self.input_shape[0], 512)
         self.fc2 = nn.Linear(512, 128)
         self.fc3 = nn.Linear(128, self.num_actions)
 
