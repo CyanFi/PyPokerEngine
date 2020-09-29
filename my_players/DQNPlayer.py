@@ -15,8 +15,8 @@ import torch.nn.functional as F
 
 # hyper-parameters
 batch_size = 32
-learning_rate = 1e-3
-gamma = 0.9
+learning_rate = 1e-4
+gamma = 0.99
 exp_replay_size = 10000
 epsilon = 0.1
 learn_start = 100
@@ -99,6 +99,8 @@ class DQNPlayer(QLearningPlayer):
         except:
             pass
         self.target_model.load_state_dict(self.model.state_dict())
+        self.model = self.model.to(self.device)
+        self.target_model.to(self.device)
         self.optimizer = optim.Adam(self.model.parameters(), lr=self.learning_rate)
         try:
             self.optimizer.load_state_dict(torch.load(self.optimizer_path))
@@ -106,9 +108,6 @@ class DQNPlayer(QLearningPlayer):
             pass
         self.losses = []
         self.sigma_parameter_mag = []
-        # move models to correct device
-        self.model = self.model.to(self.device)
-        self.target_model.to(self.device)
         if self.training:
             self.model.train()
             self.target_model.train()
@@ -208,8 +207,8 @@ class DQNPlayer(QLearningPlayer):
         self.optimizer.step()
 
         self.update_target_model()
-        self.save_loss(loss.item())
-        self.save_sigma_param_magnitudes()
+        # self.save_loss(loss.item())
+        # self.save_sigma_param_magnitudes()
 
     def update_target_model(self):
         """
@@ -223,9 +222,19 @@ class DQNPlayer(QLearningPlayer):
     def get_max_next_state_action(self, next_states):
         return self.target_model(next_states).max(dim=1)[1].view(-1, 1)
 
-    def huber(self, x):
+    @staticmethod
+    def huber(x):
         cond = (x.abs() < 1.0).to(torch.float)
         return 0.5 * x.pow(2) * cond + (x.abs() - 0.5) * (1 - cond)
+
+    @staticmethod
+    def bce_loss(x, y):
+        """
+        :return: binary entropy loss between x and y
+        """
+        _x = 1 / (1 + torch.exp(-x))
+        _y = 1 / (1 + torch.exp(-y))
+        return -(_y * torch.log(_x) + (1 - _y) * torch.log(1 - _x))
 
     @staticmethod
     def card_to_int(card):
@@ -252,13 +261,19 @@ class DQNPlayer(QLearningPlayer):
         with torch.no_grad():
             if np.random.random() >= eps or not self.training:
                 X = torch.tensor([s], device=self.device, dtype=torch.float)
-                a = self.model(X).max(1)[1].view(1, 1)
-                return a.item()
+                action_list = self.model(X).numpy().reshape(-1)
+                if opponent['state'] == 'allin' or valid_actions[2]['amount']['max'] == -1:
+                    action_list = np.delete(action_list, 2)
+                if valid_actions[1]['amount'] == 0:
+                    # if one can check, do not fold
+                    action_list[0] = action_list[1] - 1
+                return np.argmax(action_list)
             else:
                 action_list = np.array([0, 1, 2])
                 if opponent['state'] == 'allin' or valid_actions[2]['amount']['max'] == -1:
                     action_list = np.delete(action_list, 2)
                 if valid_actions[1]['amount'] == 0:
+                    # if one can check, do not fold
                     action_list = np.delete(action_list, 0)
                 return np.random.choice(action_list, 1).item()
 

@@ -66,8 +66,10 @@ class QLearningPlayer(BasePokerPlayer):
         state = int(self.hand_strength * 10), round_state['big_blind_pos'], int(
             round_state['seats'][self.player_id]['stack'] / 10)
         final_valid_actions = valid_actions
-        if final_valid_actions[2]['amount']['max'] == -1:
+        if final_valid_actions[2]['amount']['max'] == -1 or round_state['seats'][(self.player_id + 1) % 2]['state'] == 'allin':
             final_valid_actions.pop(2)
+        if final_valid_actions[1]['amount'] == 0:
+            final_valid_actions.pop(0)
         # epsilon-greedy exploration
         if self.training and rand.random() < self.epsilon:
             choice = self.__choice_action(final_valid_actions)

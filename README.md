@@ -14,7 +14,7 @@ python test.py
 ## Agent:
 + DQN agent
 ## Train Result
-vs random: winning rate = 0.94
+vs random: winning rate > 0.93
 
 ## Coming features
 ### known issue
