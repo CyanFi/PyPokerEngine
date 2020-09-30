@@ -261,7 +261,7 @@ class DQNPlayer(QLearningPlayer):
         with torch.no_grad():
             if np.random.random() >= eps or not self.training:
                 X = torch.tensor([s], device=self.device, dtype=torch.float)
-                action_list = self.model(X).numpy().reshape(-1)
+                action_list = self.model(X).cpu().numpy().reshape(-1)
                 if opponent['state'] == 'allin' or valid_actions[2]['amount']['max'] == -1:
                     action_list = np.delete(action_list, 2)
                 if valid_actions[1]['amount'] == 0:
@@ -329,6 +329,11 @@ class DQNPlayer(QLearningPlayer):
     def receive_game_update_message(self, new_action, round_state):
         pass
 
+    @staticmethod
+    def round_int_to_string(round_int):
+        m = {0: 'preflop', 1: 'flop', 2: 'turn', 3: 'river'}
+        return m[round_int]
+
     def receive_round_result_message(self, winners, hand_info, round_state):
         if len(self.history) >= 1 and self.training:
             # if player has declared some action before
@@ -345,16 +350,18 @@ class DQNPlayer(QLearningPlayer):
             # average reward
             reward /= len(self.history)
 
-            if len(round_state['action_histories']) == 1:
-                community_card = []
-            elif len(round_state['action_histories']) == 2:
+            action_num = len(round_state['action_histories'])
+            if round_state['action_histories'][self.round_int_to_string(action_num - 1)] == []:
+                action_num -= 1
+            if action_num == 1:
+                community_card = self.community_card_to_tuple([])
+            elif action_num == 2:
                 community_card = self.community_card_to_tuple(round_state['community_card'][:3])
-            elif len(round_state['action_histories']) == 3:
+            elif action_num == 3:
                 community_card = self.community_card_to_tuple(round_state['community_card'][:4])
-            elif len(round_state['action_histories']) == 4:
+            elif action_num == 4:
                 community_card = self.community_card_to_tuple(round_state['community_card'][:5])
-            last_state = (self.hole_card[0], self.hole_card[1]) + community_card + (
-                round_state['seats'][self.player_id]['stack'],) + (-1, -1)
+            last_state = (self.hole_card[0], self.hole_card[1]) + community_card + (round_state['seats'][self.player_id]['stack'],) + (-1, -1)
             last_state = self.process_state(last_state)
             # append the last state to history
             self.history.append(last_state + (None,))

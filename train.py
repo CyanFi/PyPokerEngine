@@ -17,7 +17,7 @@ log_interval = 100
 epsilon_start = 1.0
 epsilon_final = 0.01
 epsilon_decay = 10000
-epsilon_decrease = lambda episode_idx: 0.00
+epsilon_decrease = lambda episode_idx: 0.1
 
 print('Training episode: {}.\nLog every {} episode.\n'.format(num_episode, log_interval))
 # model path
