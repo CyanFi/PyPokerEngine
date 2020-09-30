@@ -21,8 +21,8 @@ epsilon_decrease = lambda episode_idx: 0.1
 
 print('Training episode: {}.\nLog every {} episode.\n'.format(num_episode, log_interval))
 # model path
-model_path = 'model/DQN0.dump'
-optimizer_path = 'model/DQN0_optim.dump'
+model_path = 'model/DQN00.dump'
+optimizer_path = 'model/DQN00_optim.dump'
 
 win = 0
 log = []

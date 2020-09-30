@@ -17,7 +17,7 @@ import torch.nn.functional as F
 batch_size = 32
 learning_rate = 1e-4
 gamma = 0.99
-exp_replay_size = 10000
+exp_replay_size = 100000
 epsilon = 0.1
 learn_start = 100
 target_net_update_freq = 500
@@ -29,9 +29,9 @@ class ExperienceReplayMemory:
         self.memory = []
 
     def push(self, transition):
+        if len(self.memory) == self.capacity:
+            self.memory = []
         self.memory.append(transition)
-        if len(self.memory) > self.capacity:
-            del self.memory[0]
 
     def sample(self, batch_size):
         return rand.sample(self.memory, batch_size)
@@ -180,7 +180,7 @@ class DQNPlayer(QLearningPlayer):
                 max_next_q_values[non_final_mask] = self.target_model(non_final_next_states).gather(1, max_next_action)
             expected_q_values = batch_reward + (self.gamma * max_next_q_values)
 
-        diff = (expected_q_values - current_q_values)
+        diff = self.learning_rate*(expected_q_values - current_q_values)
         loss = self.huber(diff)
         loss = loss.mean()
 
@@ -361,7 +361,8 @@ class DQNPlayer(QLearningPlayer):
                 community_card = self.community_card_to_tuple(round_state['community_card'][:4])
             elif action_num == 4:
                 community_card = self.community_card_to_tuple(round_state['community_card'][:5])
-            last_state = (self.hole_card[0], self.hole_card[1]) + community_card + (round_state['seats'][self.player_id]['stack'],) + (-1, -1)
+            last_state = (self.hole_card[0], self.hole_card[1]) + community_card + (
+            round_state['seats'][self.player_id]['stack'],) + (-1, -1)
             last_state = self.process_state(last_state)
             # append the last state to history
             self.history.append(last_state + (None,))

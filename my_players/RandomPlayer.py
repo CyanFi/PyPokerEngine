@@ -6,7 +6,6 @@ class RandomPlayer(BasePokerPlayer):
 
     def __init__(self):
         self.fold_ratio = self.call_ratio = raise_ratio = 1.0 / 3
-        self.oponent = None
 
     def set_action_ratio(self, fold_ratio, call_ratio, raise_ratio):
         ratio = [fold_ratio, call_ratio, raise_ratio]
