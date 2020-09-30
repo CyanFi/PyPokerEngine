@@ -13,8 +13,8 @@ from my_players.DQNPlayer import DQNPlayer
 num_episode = 10000
 win = 0
 ql_path = 'model/ql_z.npy'
-model_path = 'model/DQN4.dump'
-optimizer_path = 'model/DQN4_optim.dump'
+model_path = 'model/DQN0.dump'
+optimizer_path = 'model/DQN0.optim.dump'
 count = 0
 log_interval = 10
 log = []

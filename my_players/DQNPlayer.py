@@ -92,7 +92,7 @@ class DQNPlayer(QLearningPlayer):
         self.training = training
         # declare DQN model
         self.num_actions = 3
-        self.num_feats = (8,)
+        self.num_feats = (10,)
         self.declare_networks()
         try:
             self.model.load_state_dict(torch.load(self.model_path))
@@ -277,6 +277,15 @@ class DQNPlayer(QLearningPlayer):
                     action_list = np.delete(action_list, 0)
                 return np.random.choice(action_list, 1).item()
 
+    @staticmethod
+    def process_state(s):
+        new_s = list(s)
+        for i in range(0, 7):
+            new_s[i] = new_s[i] / 26.0 - 1
+        for i in range(7, 10):
+            new_s[i] = (new_s[i] - 100) / 100.0
+        return tuple(new_s)
+
     def declare_action(self, valid_actions, hole_card, round_state):
         """
         state: hole_card, community_card, self.stack
@@ -287,7 +296,9 @@ class DQNPlayer(QLearningPlayer):
         self.hole_card = (hole_card_1, hole_card_2)
         community_card = self.community_card_to_tuple(round_state['community_card'])
 
-        state = self.hole_card + community_card + (int(round_state['seats'][self.player_id]['stack']),)
+        state = self.hole_card + community_card + (int(round_state['seats'][self.player_id]['stack']),) + (
+            valid_actions[1]['amount'], valid_actions[2]['amount']['min'])
+        state = self.process_state(state)
         action = self.eps_greedy_policy(state, round_state['seats'][(self.player_id + 1) % 2], valid_actions,
                                         self.epsilon)
         action = valid_actions[action]['action']
@@ -343,7 +354,8 @@ class DQNPlayer(QLearningPlayer):
             elif len(round_state['action_histories']) == 4:
                 community_card = self.community_card_to_tuple(round_state['community_card'][:5])
             last_state = (self.hole_card[0], self.hole_card[1]) + community_card + (
-                round_state['seats'][self.player_id]['stack'],)
+                round_state['seats'][self.player_id]['stack'],) + (-1, -1)
+            last_state = self.process_state(last_state)
             # append the last state to history
             self.history.append(last_state + (None,))
 
