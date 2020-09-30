@@ -8,7 +8,7 @@ from pypokerengine.api.game import setup_config, start_poker
 from my_players.RandomPlayer import RandomPlayer
 from my_players.QLearningPlayer import QLearningPlayer
 from my_players.DQNPlayer import DQNPlayer
-import math
+from my_players.AllCallPlayer import AllCallPlayer
 
 num_episode = 100000
 log_interval = 100
@@ -31,7 +31,7 @@ for i in range(0, num_episode):
     count = i + 1
     config = setup_config(max_round=15, initial_stack=100, small_blind_amount=5)
     # The first player is random player
-    config.register_player(name="p1", algorithm=RandomPlayer())
+    config.register_player(name="p1", algorithm=AllCallPlayer())
     # THe second player is training
     config.register_player(name="p2",
                            algorithm=DQNPlayer(model_path=model_path, optimizer_path=optimizer_path, training=True))

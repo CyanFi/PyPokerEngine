@@ -25,15 +25,13 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="6a3c0696-1b0f-4e40-a13d-c2236ee4ce12" name="Default Changelist" comment="dqn update">
-      <change afterPath="$PROJECT_DIR$/model/ql_z.npy" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/my_players/AllCallPlayer.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/model/DQN4.dump" beforeDir="false" afterPath="$PROJECT_DIR$/model/DQN4.dump" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/model/DQN4_optim.dump" beforeDir="false" afterPath="$PROJECT_DIR$/model/DQN4_optim.dump" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/model/DQN4.dump" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/model/DQN4_optim.dump" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/model/ql_z.npy" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/my_players/DQNPlayer.py" beforeDir="false" afterPath="$PROJECT_DIR$/my_players/DQNPlayer.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/my_players/QLearningPlayer.py" beforeDir="false" afterPath="$PROJECT_DIR$/my_players/QLearningPlayer.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/test.py" beforeDir="false" afterPath="$PROJECT_DIR$/test.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tmp.py" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/train.py" beforeDir="false" afterPath="$PROJECT_DIR$/train.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -65,7 +63,7 @@
       <recent name="$PROJECT_DIR$/model" />
     </key>
   </component>
-  <component name="RunManager" selected="Python.test">
+  <component name="RunManager" selected="Python.train">
     <configuration name="test" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="PyPokerEngine" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -131,8 +129,8 @@
     </configuration>
     <recent_temporary>
       <list>
-        <item itemvalue="Python.test" />
         <item itemvalue="Python.train" />
+        <item itemvalue="Python.test" />
         <item itemvalue="Python.tmp" />
       </list>
     </recent_temporary>
@@ -205,9 +203,10 @@
     <option name="LAST_COMMIT_MESSAGE" value="dqn update" />
   </component>
   <component name="WindowStateProjectService">
-    <state x="574" y="277" key="#com.intellij.refactoring.safeDelete.UnsafeUsagesDialog" timestamp="1601374964832">
-      <screen x="0" y="23" width="1920" height="986" />
+    <state x="574" y="274" key="#com.intellij.refactoring.safeDelete.UnsafeUsagesDialog" timestamp="1601478553491">
+      <screen x="0" y="23" width="1920" height="975" />
     </state>
+    <state x="574" y="274" key="#com.intellij.refactoring.safeDelete.UnsafeUsagesDialog/0.23.1920.975@0.23.1920.975" timestamp="1601478553491" />
     <state x="574" y="276" key="#com.intellij.refactoring.safeDelete.UnsafeUsagesDialog/0.23.1920.980@0.23.1920.980" timestamp="1601283339258" />
     <state x="574" y="276" key="#com.intellij.refactoring.safeDelete.UnsafeUsagesDialog/0.23.1920.982@0.23.1920.982" timestamp="1601305549797" />
     <state x="574" y="277" key="#com.intellij.refactoring.safeDelete.UnsafeUsagesDialog/0.23.1920.984@0.23.1920.984" timestamp="1601305732523" />
@@ -222,9 +221,10 @@
     </state>
     <state x="348" y="142" width="977" height="760" key="DiffContextDialog/0.23.1920.982@0.23.1920.982" timestamp="1601284257393" />
     <state x="217" y="205" width="1550" height="710" key="DiffContextDialog/0.23.1920.984@0.23.1920.984" timestamp="1601297833467" />
-    <state width="1156" height="258" key="GridCell.Tab.0.bottom" timestamp="1601376461271">
-      <screen x="0" y="23" width="1920" height="989" />
+    <state width="1156" height="258" key="GridCell.Tab.0.bottom" timestamp="1601478555270">
+      <screen x="0" y="23" width="1920" height="975" />
     </state>
+    <state width="1156" height="258" key="GridCell.Tab.0.bottom/0.23.1920.975@0.23.1920.975" timestamp="1601478555270" />
     <state width="1156" height="319" key="GridCell.Tab.0.bottom/0.23.1920.978@0.23.1920.978" timestamp="1601222210291" />
     <state width="1156" height="258" key="GridCell.Tab.0.bottom/0.23.1920.980@0.23.1920.980" timestamp="1601283341190" />
     <state width="1156" height="258" key="GridCell.Tab.0.bottom/0.23.1920.982@0.23.1920.982" timestamp="1601345300513" />
@@ -233,9 +233,10 @@
     <state width="1156" height="319" key="GridCell.Tab.0.bottom/0.23.1920.988@0.23.1920.988" timestamp="1601374590928" />
     <state width="1156" height="258" key="GridCell.Tab.0.bottom/0.23.1920.989@0.23.1920.989" timestamp="1601376461271" />
     <state width="1156" height="258" key="GridCell.Tab.0.bottom/0.23.1920.992@0.23.1920.992" timestamp="1601372405782" />
-    <state width="1156" height="258" key="GridCell.Tab.0.center" timestamp="1601376461271">
-      <screen x="0" y="23" width="1920" height="989" />
+    <state width="1156" height="258" key="GridCell.Tab.0.center" timestamp="1601478555270">
+      <screen x="0" y="23" width="1920" height="975" />
     </state>
+    <state width="1156" height="258" key="GridCell.Tab.0.center/0.23.1920.975@0.23.1920.975" timestamp="1601478555270" />
     <state width="1156" height="319" key="GridCell.Tab.0.center/0.23.1920.978@0.23.1920.978" timestamp="1601222210291" />
     <state width="1156" height="258" key="GridCell.Tab.0.center/0.23.1920.980@0.23.1920.980" timestamp="1601283341189" />
     <state width="1156" height="258" key="GridCell.Tab.0.center/0.23.1920.982@0.23.1920.982" timestamp="1601345300513" />
@@ -244,9 +245,10 @@
     <state width="1156" height="319" key="GridCell.Tab.0.center/0.23.1920.988@0.23.1920.988" timestamp="1601374590927" />
     <state width="1156" height="258" key="GridCell.Tab.0.center/0.23.1920.989@0.23.1920.989" timestamp="1601376461271" />
     <state width="1156" height="258" key="GridCell.Tab.0.center/0.23.1920.992@0.23.1920.992" timestamp="1601372405782" />
-    <state width="1156" height="258" key="GridCell.Tab.0.left" timestamp="1601376461270">
-      <screen x="0" y="23" width="1920" height="989" />
+    <state width="1156" height="258" key="GridCell.Tab.0.left" timestamp="1601478555269">
+      <screen x="0" y="23" width="1920" height="975" />
     </state>
+    <state width="1156" height="258" key="GridCell.Tab.0.left/0.23.1920.975@0.23.1920.975" timestamp="1601478555269" />
     <state width="1156" height="319" key="GridCell.Tab.0.left/0.23.1920.978@0.23.1920.978" timestamp="1601222210290" />
     <state width="1156" height="258" key="GridCell.Tab.0.left/0.23.1920.980@0.23.1920.980" timestamp="1601283341188" />
     <state width="1156" height="258" key="GridCell.Tab.0.left/0.23.1920.982@0.23.1920.982" timestamp="1601345300513" />
@@ -255,9 +257,10 @@
     <state width="1156" height="319" key="GridCell.Tab.0.left/0.23.1920.988@0.23.1920.988" timestamp="1601374590927" />
     <state width="1156" height="258" key="GridCell.Tab.0.left/0.23.1920.989@0.23.1920.989" timestamp="1601376461270" />
     <state width="1156" height="258" key="GridCell.Tab.0.left/0.23.1920.992@0.23.1920.992" timestamp="1601372405781" />
-    <state width="1156" height="258" key="GridCell.Tab.0.right" timestamp="1601376461271">
-      <screen x="0" y="23" width="1920" height="989" />
+    <state width="1156" height="258" key="GridCell.Tab.0.right" timestamp="1601478555270">
+      <screen x="0" y="23" width="1920" height="975" />
     </state>
+    <state width="1156" height="258" key="GridCell.Tab.0.right/0.23.1920.975@0.23.1920.975" timestamp="1601478555270" />
     <state width="1156" height="319" key="GridCell.Tab.0.right/0.23.1920.978@0.23.1920.978" timestamp="1601222210291" />
     <state width="1156" height="258" key="GridCell.Tab.0.right/0.23.1920.980@0.23.1920.980" timestamp="1601283341189" />
     <state width="1156" height="258" key="GridCell.Tab.0.right/0.23.1920.982@0.23.1920.982" timestamp="1601345300513" />
@@ -323,7 +326,7 @@
       <breakpoints>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/my_players/DQNPlayer.py</url>
-          <line>266</line>
+          <line>267</line>
           <option name="timeStamp" value="1" />
         </line-breakpoint>
       </breakpoints>

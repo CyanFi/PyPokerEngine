@@ -9,6 +9,7 @@ from my_players.RandomPlayer import RandomPlayer
 from my_players.QLearningPlayer import QLearningPlayer
 from my_players.HumanPlayer import ConsolePlayer
 from my_players.DQNPlayer import DQNPlayer
+from my_players.AllCallPlayer import AllCallPlayer
 
 num_episode = 10000
 win = 0
@@ -21,7 +22,7 @@ log = []
 for i in range(0, num_episode):
     count = count + 1
     config = setup_config(max_round=15, initial_stack=100, small_blind_amount=5)
-    config.register_player(name="p1", algorithm=RandomPlayer())
+    config.register_player(name="p1", algorithm=AllCallPlayer())
     config.register_player(name="p2",
                            algorithm=DQNPlayer(model_path=model_path, optimizer_path=optimizer_path, training=False))
 

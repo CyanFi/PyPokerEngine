@@ -15,8 +15,8 @@ import torch.nn.functional as F
 
 # hyper-parameters
 batch_size = 32
-learning_rate = 1e-4
-gamma = 0.99
+learning_rate = 1e-3
+gamma = 0.9
 exp_replay_size = 100000
 epsilon = 0.1
 learn_start = 100
@@ -29,9 +29,10 @@ class ExperienceReplayMemory:
         self.memory = []
 
     def push(self, transition):
-        if len(self.memory) == self.capacity:
-            self.memory = []
+
         self.memory.append(transition)
+        if len(self.memory) > self.capacity:
+            del self.memory[0]
 
     def sample(self, batch_size):
         return rand.sample(self.memory, batch_size)
