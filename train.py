@@ -9,20 +9,21 @@ from my_players.RandomPlayer import RandomPlayer
 from my_players.QLearningPlayer import QLearningPlayer
 from my_players.DQNPlayer import DQNPlayer
 from my_players.AllCallPlayer import AllCallPlayer
+import math
 
 num_episode = 100000
 log_interval = 100
 
 # DQN model hyper-parameters: epsilon variables
-epsilon_start = 1.0
+epsilon_start = 0.5
 epsilon_final = 0.01
 epsilon_decay = 10000
-epsilon_decrease = lambda episode_idx: 0.1
+epsilon_decrease = lambda episode_idx: 0.1 
 
 print('Training episode: {}.\nLog every {} episode.\n'.format(num_episode, log_interval))
 # model path
-model_path = 'model/DQN00.dump'
-optimizer_path = 'model/DQN00_optim.dump'
+model_path = 'model/DQN3.dump'
+optimizer_path = 'model/DQN3_optim.dump'
 
 win = 0
 log = []
@@ -30,7 +31,7 @@ log = []
 for i in range(0, num_episode):
     count = i + 1
     config = setup_config(max_round=15, initial_stack=100, small_blind_amount=5)
-    # The first player is random player
+    # The first player is all call
     config.register_player(name="p1", algorithm=AllCallPlayer())
     # THe second player is training
     config.register_player(name="p2",

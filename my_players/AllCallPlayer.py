@@ -1,12 +1,14 @@
 from pypokerengine.players import BasePokerPlayer
 
+
 class AllCallPlayer(BasePokerPlayer):
 
     def __init__(self):
-        self.fold_ratio = self.call_ratio = raise_ratio = 1.0 / 3
+        pass
 
     def declare_action(self, valid_actions, hole_card, round_state):
         return valid_actions[1]['action'], valid_actions[1]['amount']
+
     def receive_game_start_message(self, game_info):
         pass
 
@@ -18,5 +20,6 @@ class AllCallPlayer(BasePokerPlayer):
 
     def receive_game_update_message(self, new_action, round_state):
         pass
+
     def receive_round_result_message(self, winners, hand_info, round_state):
         pass

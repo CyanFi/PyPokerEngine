@@ -24,7 +24,6 @@ class RandomPlayer(BasePokerPlayer):
         return action, amount
 
     def __choice_action(self, valid_actions):
-        r = rand.random()
         if len(valid_actions) == 3:
             r = rand.random()
             if r <= self.fold_ratio:

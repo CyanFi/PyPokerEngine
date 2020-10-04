@@ -63,7 +63,7 @@ ssh linux9
 # project folder, storage: 1TB
 cd /research/dept8/estr3108/yzhuang9
 # connect gpu, --gres=gpu后面的数为gpu数量，gpu39为gpu集群号码
-srun --gres=gpu:1 -w gpu39 --pty bash
+srun --gres=gpu:2 -w gpu39 --pty bash
 # exit
 exit 
 ```

@@ -15,12 +15,12 @@ import torch.nn.functional as F
 
 # hyper-parameters
 batch_size = 32
-learning_rate = 1e-3
+learning_rate = 1e-2
 gamma = 0.9
-exp_replay_size = 100000
+exp_replay_size = 10000
 epsilon = 0.1
 learn_start = 100
-target_net_update_freq = 500
+target_net_update_freq = 100
 
 
 class ExperienceReplayMemory:
@@ -29,7 +29,6 @@ class ExperienceReplayMemory:
         self.memory = []
 
     def push(self, transition):
-
         self.memory.append(transition)
         if len(self.memory) > self.capacity:
             del self.memory[0]
@@ -50,8 +49,8 @@ class DQN(nn.Module):
         self.input_shape = input_shape
         self.num_actions = num_actions
 
-        self.fc1 = nn.Linear(self.input_shape[0], 1024)
-        self.fc2 = nn.Linear(1024, 512)
+        self.fc1 = nn.Linear(self.input_shape[0], 128)
+        self.fc2 = nn.Linear(128, 512)
         self.fc3 = nn.Linear(512, 128)
         self.fc4 = nn.Linear(128, self.num_actions)
 
@@ -93,7 +92,7 @@ class DQNPlayer(QLearningPlayer):
         self.training = training
         # declare DQN model
         self.num_actions = 3
-        self.num_feats = (10,)
+        self.num_feats = (8,)
         self.declare_networks()
         try:
             self.model.load_state_dict(torch.load(self.model_path))
@@ -181,7 +180,7 @@ class DQNPlayer(QLearningPlayer):
                 max_next_q_values[non_final_mask] = self.target_model(non_final_next_states).gather(1, max_next_action)
             expected_q_values = batch_reward + (self.gamma * max_next_q_values)
 
-        diff = self.learning_rate*(expected_q_values - current_q_values)
+        diff = (expected_q_values - current_q_values)
         loss = self.huber(diff)
         loss = loss.mean()
 
@@ -283,7 +282,7 @@ class DQNPlayer(QLearningPlayer):
         new_s = list(s)
         for i in range(0, 7):
             new_s[i] = new_s[i] / 26.0 - 1
-        for i in range(7, 10):
+        for i in range(7, 8):
             new_s[i] = (new_s[i] - 100) / 100.0
         return tuple(new_s)
 
@@ -297,8 +296,7 @@ class DQNPlayer(QLearningPlayer):
         self.hole_card = (hole_card_1, hole_card_2)
         community_card = self.community_card_to_tuple(round_state['community_card'])
 
-        state = self.hole_card + community_card + (int(round_state['seats'][self.player_id]['stack']),) + (
-            valid_actions[1]['amount'], valid_actions[2]['amount']['min'])
+        state = self.hole_card + community_card + (int(round_state['seats'][self.player_id]['stack']),)
         state = self.process_state(state)
         action = self.eps_greedy_policy(state, round_state['seats'][(self.player_id + 1) % 2], valid_actions,
                                         self.epsilon)
@@ -363,7 +361,7 @@ class DQNPlayer(QLearningPlayer):
             elif action_num == 4:
                 community_card = self.community_card_to_tuple(round_state['community_card'][:5])
             last_state = (self.hole_card[0], self.hole_card[1]) + community_card + (
-            round_state['seats'][self.player_id]['stack'],) + (-1, -1)
+                round_state['seats'][self.player_id]['stack'],)
             last_state = self.process_state(last_state)
             # append the last state to history
             self.history.append(last_state + (None,))
