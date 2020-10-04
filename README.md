@@ -3,6 +3,7 @@
 ```sh
 pip install PyPokerEngine
 ```
+and ``PyTorch``
 ## Run
 ```sh
 # Train model
