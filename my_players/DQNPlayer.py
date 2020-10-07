@@ -15,7 +15,7 @@ import torch.nn.functional as F
 
 # hyper-parameters
 batch_size = 32
-learning_rate = 1e-2
+learning_rate = 1e-3
 gamma = 0.9
 exp_replay_size = 10000
 epsilon = 0.1
@@ -83,7 +83,7 @@ class DQNPlayer(QLearningPlayer):
         self.learn_start = learn_start
         self.target_net_update_freq = target_net_update_freq
         # training-required game attribute
-        self.stack = 100
+        self.stack = 1500
         self.hole_card = None
         self.model_path = model_path
         self.optimizer_path = optimizer_path
@@ -283,7 +283,7 @@ class DQNPlayer(QLearningPlayer):
         for i in range(0, 7):
             new_s[i] = new_s[i] / 26.0 - 1
         for i in range(7, 8):
-            new_s[i] = (new_s[i] - 100) / 100.0
+            new_s[i] = (new_s[i] - 1500) / 1500.0
         return tuple(new_s)
 
     def declare_action(self, valid_actions, hole_card, round_state):
@@ -343,7 +343,7 @@ class DQNPlayer(QLearningPlayer):
                 reward = winners[0]['stack'] - self.stack
                 self.stack = winners[0]['stack']
             else:
-                new_stack = 200 - winners[0]['stack']
+                new_stack = 3000 - winners[0]['stack']
                 reward = new_stack - self.stack
                 self.stack = new_stack
             # average reward

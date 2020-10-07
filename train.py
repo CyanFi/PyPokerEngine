@@ -12,13 +12,13 @@ from my_players.AllCallPlayer import AllCallPlayer
 import math
 
 num_episode = 100000
-log_interval = 100
+log_interval = 10
 
 # DQN model hyper-parameters: epsilon variables
 epsilon_start = 0.5
 epsilon_final = 0.01
 epsilon_decay = 10000
-epsilon_decrease = lambda episode_idx: 0.1 
+epsilon_decrease = lambda episode_idx: 0.01
 
 print('Training episode: {}.\nLog every {} episode.\n'.format(num_episode, log_interval))
 # model path
@@ -30,7 +30,7 @@ log = []
 
 for i in range(0, num_episode):
     count = i + 1
-    config = setup_config(max_round=15, initial_stack=100, small_blind_amount=5)
+    config = setup_config(max_round=100, initial_stack=1500, small_blind_amount=5)
     # The first player is all call
     config.register_player(name="p1", algorithm=AllCallPlayer())
     # THe second player is training
@@ -48,12 +48,10 @@ for i in range(0, num_episode):
         config.players_info[1]['algorithm'].memory = _m
     game_result = start_poker(config, verbose=0)
 
-    if game_result['players'][1]['stack'] > game_result['players'][0]['stack']:
-        # if player 1 wins
-        win += 1
+    win += (game_result['players'][1]['stack'] - game_result['players'][0]['stack'])/20.0
     if count % log_interval == 0:
         log.append([i + 1, win / count])
-        print(count, ' episode ', win / count)
+        print(count, ' episode 百手盈利', win / count)
         # save model
         config.players_info[1]['algorithm'].save_model()
 
