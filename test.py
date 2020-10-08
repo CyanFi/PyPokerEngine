@@ -28,7 +28,7 @@ for i in range(0, num_episode):
                            algorithm=DQNPlayer(model_path, optimizer_path, False))
 
     game_result = start_poker(config, verbose=0)
-    win = win + (game_result['players'][1]['stack'] - game_result['players'][0]['stack']) / 10
+    win = win + (game_result['players'][1]['stack'] - game_result['players'][0]['stack']) / 20
 
     if count % log_interval == 0:
         print(count, ' episode, 百手盈利', win / count)
