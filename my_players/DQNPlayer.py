@@ -15,12 +15,12 @@ import torch.nn.functional as F
 
 # hyper-parameters
 batch_size = 32
-learning_rate = 1e-3
-gamma = 0.9
+learning_rate = 1e-2
+gamma = 0.95
 exp_replay_size = 10000
 epsilon = 0.1
 learn_start = 100
-target_net_update_freq = 100
+target_net_update_freq = 10
 
 
 class ExperienceReplayMemory:
@@ -95,13 +95,13 @@ class DQNPlayer(QLearningPlayer):
         self.num_feats = (8,)
         self.declare_networks()
         try:
-            self.model.load_state_dict(torch.load(self.model_path))
+            self.policy_net.load_state_dict(torch.load(self.model_path))
         except:
             pass
-        self.target_model.load_state_dict(self.model.state_dict())
-        self.model = self.model.to(self.device)
-        self.target_model.to(self.device)
-        self.optimizer = optim.Adam(self.model.parameters(), lr=self.learning_rate)
+        self.target_net.load_state_dict(self.policy_net.state_dict())
+        self.policy_net = self.policy_net.to(self.device)
+        self.target_net.to(self.device)
+        self.optimizer = optim.Adam(self.policy_net.parameters(), lr=self.learning_rate)
         try:
             self.optimizer.load_state_dict(torch.load(self.optimizer_path))
         except:
@@ -109,18 +109,18 @@ class DQNPlayer(QLearningPlayer):
         self.losses = []
         self.sigma_parameter_mag = []
         if self.training:
-            self.model.train()
-            self.target_model.train()
+            self.policy_net.train()
+            self.target_net.train()
         else:
-            self.model.eval()
-            self.target_model.eval()
+            self.policy_net.eval()
+            self.target_net.eval()
 
         self.update_count = 0
         self.episode = 0
 
     def declare_networks(self):
-        self.model = DQN(self.num_feats, self.num_actions)
-        self.target_model = DQN(self.num_feats, self.num_actions)
+        self.policy_net = DQN(self.num_feats, self.num_actions)
+        self.target_net = DQN(self.num_feats, self.num_actions)
 
     def declare_memory(self):
         self.memory = ExperienceReplayMemory(self.experience_replay_size)
@@ -155,7 +155,7 @@ class DQNPlayer(QLearningPlayer):
 
     def save_sigma_param_magnitudes(self):
         tmp = []
-        for name, param in self.model.named_parameters():
+        for name, param in self.policy_net.named_parameters():
             if param.requires_grad:
                 if 'sigma' in name:
                     tmp += param.data.cpu().numpy().ravel().tolist()
@@ -169,7 +169,7 @@ class DQNPlayer(QLearningPlayer):
         batch_state, batch_action, batch_reward, non_final_next_states, non_final_mask, empty_next_state_values = batch_vars
 
         # estimate
-        current_q_values = self.model(batch_state).gather(1, batch_action)
+        current_q_values = self.policy_net(batch_state).gather(1, batch_action)
 
         # target
         with torch.no_grad():
@@ -177,12 +177,13 @@ class DQNPlayer(QLearningPlayer):
             max_next_q_values = torch.zeros(self.batch_size, device=self.device, dtype=torch.float).unsqueeze(dim=1)
             if not empty_next_state_values:
                 max_next_action = self.get_max_next_state_action(non_final_next_states)
-                max_next_q_values[non_final_mask] = self.target_model(non_final_next_states).gather(1, max_next_action)
+                max_next_q_values[non_final_mask] = self.target_net(non_final_next_states).gather(1, max_next_action)
             expected_q_values = batch_reward + (self.gamma * max_next_q_values)
-
-        diff = (expected_q_values - current_q_values)
-        loss = self.huber(diff)
-        loss = loss.mean()
+        loss_fn = nn.SmoothL1Loss()
+        loss = loss_fn(current_q_values, expected_q_values)
+        # diff = (expected_q_values - current_q_values)
+        # loss = self.huber(diff)
+        # loss = loss.mean()
 
         return loss
 
@@ -198,11 +199,11 @@ class DQNPlayer(QLearningPlayer):
         batch_vars = self.prep_minibatch()
 
         loss = self.compute_loss(batch_vars)
-
+        print("loss: ", loss.item())
         # Optimize the model
         self.optimizer.zero_grad()
         loss.backward()
-        for param in self.model.parameters():
+        for param in self.policy_net.parameters():
             param.grad.data.clamp_(-1, 1)
         self.optimizer.step()
 
@@ -217,10 +218,10 @@ class DQNPlayer(QLearningPlayer):
         self.update_count += 1
         self.update_count = self.update_count % self.target_net_update_freq
         if self.update_count == 0:
-            self.target_model.load_state_dict(self.model.state_dict())
+            self.target_net.load_state_dict(self.policy_net.state_dict())
 
     def get_max_next_state_action(self, next_states):
-        return self.target_model(next_states).max(dim=1)[1].view(-1, 1)
+        return self.target_net(next_states).max(dim=1)[1].view(-1, 1)
 
     @staticmethod
     def huber(x):
@@ -261,7 +262,7 @@ class DQNPlayer(QLearningPlayer):
         with torch.no_grad():
             if np.random.random() >= eps or not self.training:
                 X = torch.tensor([s], device=self.device, dtype=torch.float)
-                action_list = self.model(X).cpu().numpy().reshape(-1)
+                action_list = self.policy_net(X).cpu().numpy().reshape(-1)
                 if opponent['state'] == 'allin' or valid_actions[2]['amount']['max'] == -1:
                     action_list = np.delete(action_list, 2)
                 if valid_actions[1]['amount'] == 0:
@@ -375,5 +376,5 @@ class DQNPlayer(QLearningPlayer):
             self.history = []
 
     def save_model(self):
-        torch.save(self.model.state_dict(), self.model_path)
+        torch.save(self.policy_net.state_dict(), self.model_path)
         torch.save(self.optimizer.state_dict(), self.optimizer_path)

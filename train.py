@@ -18,12 +18,12 @@ log_interval = 10
 epsilon_start = 0.5
 epsilon_final = 0.01
 epsilon_decay = 10000
-epsilon_decrease = lambda episode_idx: 0.01
+epsilon_decrease = lambda episode_idx: 0.1
 
 print('Training episode: {}.\nLog every {} episode.\n'.format(num_episode, log_interval))
 # model path
-model_path = 'model/DQN3.dump'
-optimizer_path = 'model/DQN3_optim.dump'
+model_path = 'model/DQN4.dump'
+optimizer_path = 'model/DQN4_optim.dump'
 
 win = 0
 log = []
@@ -43,6 +43,7 @@ for i in range(0, num_episode):
     config.players_info[1]['algorithm'].episode = count
     if count == 1:
         _m = config.players_info[1]['algorithm'].declare_memory()
+        print("Device:", config.players_info[1]['algorithm'].device)
         print("Device:", config.players_info[1]['algorithm'].device)
     else:
         config.players_info[1]['algorithm'].memory = _m
