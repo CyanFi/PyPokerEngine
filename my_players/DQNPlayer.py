@@ -292,7 +292,7 @@ class DQNPlayer(QLearningPlayer):
         for i in range(0, 7):
             new_s[i] = new_s[i] / 26.0 - 1
         for i in range(7, 8):
-            new_s[i] = (new_s[i] - 1500) / 1500.0
+            new_s[i] = (new_s[i] - 150) / 150.0
         return tuple(new_s)
 
     def declare_action(self, valid_actions, hole_card, round_state):
@@ -307,7 +307,7 @@ class DQNPlayer(QLearningPlayer):
         self.hole_card = (hole_card_1, hole_card_2)
         community_card = self.community_card_to_tuple(round_state['community_card'])
 
-        state = self.hole_card + community_card + (round_state['seats'][self.player_id]['stack'],)
+        state = self.hole_card + community_card + (int(round_state['seats'][self.player_id]['stack']/10),)
 
         state = self.process_state(state)
         action = self.eps_greedy_policy(state, round_state['seats'][(self.player_id + 1) % 2], valid_actions,
