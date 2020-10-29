@@ -15,7 +15,7 @@ from my_players.cardplayer import cardplayer
 from scipy.stats import t
 import math
 
-num_episode = 50000
+num_episode = 10000
 win = 0
 sample_mean = 0
 SXX = 0
@@ -25,7 +25,6 @@ path1 = 'model/DQN4_optim_1.dump'
 count = 0
 log_interval = 10
 log = []
-log_loss = []
 confidence_level = 0.95
 memory = None
 config = setup_config(max_round=100, initial_stack=1500, small_blind_amount=5)
@@ -43,10 +42,10 @@ for i in range(0, num_episode):
         sample_std = math.sqrt(SXX / (count - 1))
     interval = t.interval(confidence_level, count - 1, sample_mean, sample_std)
     log.append((count,sample_mean))
-    log_loss.append(config.players_info[1]['algorithm'].loss)
+    #log_loss.append(config.players_info[1]['algorithm'].loss)
     if count % log_interval == 0:
         print(count, ' episode, 百手盈利', sample_mean, u"\u00B1", (interval[1] - interval[0]) / 2,"loss: ",config.players_info[1]['algorithm'].loss)
-
+log_loss = config.players_info[1]['algorithm'].loss
 # plot
 import matplotlib.pyplot as plt
 

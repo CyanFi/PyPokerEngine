@@ -77,7 +77,7 @@ class DQNPlayer(QLearningPlayer):
         self.episode = 0
         self.declare_memory()
         #self.oponent_action = None
-        self.loss = 0
+        self.loss = []
         #self.oponent = None
 
         # hyper-parameter for Deep Q Learning
@@ -187,7 +187,8 @@ class DQNPlayer(QLearningPlayer):
             expected_q_values = batch_reward + (self.gamma * max_next_q_values)
         loss_fn = nn.SmoothL1Loss()
         loss = loss_fn(current_q_values, expected_q_values)
-        self.loss = loss
+        self.loss.append(loss)
+        print(loss)
         # diff = (expected_q_values - current_q_values)
         # loss = self.huber(diff)
         # loss = loss.mean()
@@ -315,7 +316,7 @@ class DQNPlayer(QLearningPlayer):
         action = valid_actions[action]['action']
         if action == "raise":
             # To simplify the problem, raise only at minimum
-            amount = valid_actions[2]["amount"]["max"]
+            amount = valid_actions[2]["amount"]["min"]
         elif action == "call":
             amount = valid_actions[1]["amount"]
         else:
@@ -373,7 +374,7 @@ class DQNPlayer(QLearningPlayer):
             elif action_num == 4:
                 community_card = self.community_card_to_tuple(round_state['community_card'][:5])
             last_state = (self.hole_card[0], self.hole_card[1]) + community_card + (
-                round_state['seats'][self.player_id]['stack'],)
+                int(round_state['seats'][self.player_id]['stack']/10),)
             last_state = self.process_state(last_state)
             # append the last state to history
             self.history.append(last_state + (None,))
