@@ -188,7 +188,7 @@ class DQNPlayer(QLearningPlayer):
         loss_fn = nn.SmoothL1Loss()
         loss = loss_fn(current_q_values, expected_q_values)
         self.loss.append(loss)
-        print(loss)
+        #print(loss)
         # diff = (expected_q_values - current_q_values)
         # loss = self.huber(diff)
         # loss = loss.mean()
@@ -361,6 +361,7 @@ class DQNPlayer(QLearningPlayer):
                 self.stack = new_stack
             # average reward
             reward /= len(self.history)
+            reward /= 10
 
             action_num = len(round_state['action_histories'])
             if round_state['action_histories'][self.round_int_to_string(action_num - 1)] == []:
