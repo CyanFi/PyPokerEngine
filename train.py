@@ -32,7 +32,7 @@ config.register_player(name="p2", algorithm=A2CPlayer(model_path=path0,optimizer
 # config.players_info[1]['algorithm'].oponent = config.players_info[0]['algorithm']
 for i in range(0, num_episode):
     count = count + 1
-    game_result = start_poker(config, verbose=0)
+    game_result = start_poker(config, verbose=1)
     win = (game_result['players'][1]['stack'] - game_result['players'][0]['stack']) / 2 / 10
     # calculate bb/100g
     last_mean = sample_mean

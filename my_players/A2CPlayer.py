@@ -22,11 +22,8 @@ class ActorCritic(nn.Module):
     def __init__(self, num_inputs, num_outputs, hidden_size, std=0.0):
         super(ActorCritic, self).__init__()
 
-        self.critic = nn.Sequential(
-            nn.Linear(num_inputs, hidden_size),
-            nn.ReLU(),
-            nn.Linear(hidden_size, 1)
-        )
+        self.critic = nn.Sequential(nn.Linear(num_inputs, hidden_size),
+                                    nn.ReLU(), nn.Linear(hidden_size, 1))
 
         self.actor = nn.Sequential(
             nn.Linear(num_inputs, hidden_size),
@@ -43,7 +40,6 @@ class ActorCritic(nn.Module):
 
 
 class A2CPlayer(BasePokerPlayer):
-
     def __init__(self, model_path, optimizer_path, training):
         self.model_path = model_path
         self.optimizer_path = optimizer_path
@@ -51,12 +47,12 @@ class A2CPlayer(BasePokerPlayer):
         self.stack = 1500
         self.hole_card = None
 
-        self.lr = 1e-4
+        self.lr = 1e-3
         self.gamma = 0.95
         self.num_inputs = 8  # 2 hold card, 5 community card, self.stack
-        self.num_outputs = 4  # fold, call, raise min, raise max
+        self.num_outputs = 8  # fold, call, raise min, raise max
         self.model = ActorCritic(self.num_inputs, self.num_outputs, 128)
-        self.optimizer = optim.Adam(self.model.parameters())
+        self.optimizer = optim.Adam(self.model.parameters(),lr=self.lr)
 
         # refresh every cycle
         self.history = []
@@ -78,19 +74,19 @@ class A2CPlayer(BasePokerPlayer):
     def discrete_action(self, state, valid_actions):
         dist, value = self.model(state)
         action_raw = dist.sample()
-        if action_raw < 3:
+        if action_raw < 2:
             action = valid_actions[action_raw]['action']
-            if action == "raise":
-                # To simplify the problem, raise only at minimum
-                amount = valid_actions[2]["amount"]["min"]
-            elif action == "call":
+            if action == "call":
                 amount = valid_actions[1]["amount"]
             else:
+                # fold
                 amount = 0
 
         else:
             action = "raise"
-            amount = valid_actions[2]['amount']['max']
+            max_amount = valid_actions[2]['amount']['max']
+            min_amount = valid_actions[2]['amount']['min']
+            amount = min_amount + int((max_amount - min_amount) /2)  / 5 * (action_raw - 2)
         return action_raw, action, amount, dist, value
 
     def declare_action(self, valid_actions, hole_card, round_state):
@@ -119,7 +115,7 @@ class A2CPlayer(BasePokerPlayer):
         self.entropy += dist.entropy().mean()
         self.log_probs.append(log_prob)
         self.values.append(value)
-        self.masks.append(torch.FloatTensor(1-done).unsqueeze(1).to(device))
+        self.masks.append(torch.FloatTensor(1 - done).unsqueeze(1).to(device))
         # self.history.append(state + (action_int, int(amount/10)))
 
         return action, amount
@@ -139,13 +135,14 @@ class A2CPlayer(BasePokerPlayer):
                 reward = new_stack - self.stack
                 self.stack = new_stack
 
-            reward /= 10
-            self.rewards = [reward]*len(self.values)
+            reward /= 150
+            self.rewards = [reward] * len(self.values)
             self.masks[-1] = True
 
             # preprocess the last state
             action_num = len(round_state['action_histories'])
-            if round_state['action_histories'][self.round_int_to_string(action_num - 1)] == []:
+            if round_state['action_histories'][self.round_int_to_string(
+                    action_num - 1)] == []:
                 action_num -= 1
             if action_num == 1:
                 community_card = self.community_card_to_tuple([])
@@ -159,8 +156,9 @@ class A2CPlayer(BasePokerPlayer):
                 community_card = self.community_card_to_tuple(
                     round_state['community_card'][:5])
 
-            last_state = (self.hole_card[0], self.hole_card[1]) + community_card + (
-                int(round_state['seats'][self.player_id]['stack']/10),)
+            last_state = (
+                self.hole_card[0], self.hole_card[1]) + community_card + (int(
+                    round_state['seats'][self.player_id]['stack'] / 10), )
             last_state = self.process_state(last_state)
             last_state = torch.FloatTensor(last_state).unsqueeze(0).to(device)
             # format: state, action_type, action_amount, dist, value, mask
@@ -173,11 +171,11 @@ class A2CPlayer(BasePokerPlayer):
             self.log_probs = torch.cat(self.log_probs)
             self.returns = torch.cat(self.returns).detach()
             self.values = torch.cat(self.values)
-            advantage = self.returns-self.values
+            advantage = self.returns - self.values
             actor_loss = -(self.log_probs * advantage.detach()).mean()
-            loss_fn=nn.SmoothL1Loss()
+            loss_fn = nn.SmoothL1Loss()
             critic_loss = loss_fn(self.returns, self.values)
-            loss = actor_loss+0.5 * critic_loss - 0.01*self.entropy
+            loss = actor_loss + 0.5 * critic_loss - 0.01 * self.entropy
             print("loss:", loss.item())
 
             # back prop
@@ -221,8 +219,21 @@ class A2CPlayer(BasePokerPlayer):
     def card_to_int(card):
         """convert card to int, card[0]:花色, card[1]:rank"""
         suit_map = {'H': 0, 'S': 1, 'D': 2, 'C': 3}
-        rank_map = {'2': 0, '3': 1, '4': 2, '5': 3, '6': 4, '7': 5, '8': 6, '9': 7, 'T': 8, 'J': 9, 'Q': 10, 'K': 11,
-                    'A': 12}
+        rank_map = {
+            '2': 0,
+            '3': 1,
+            '4': 2,
+            '5': 3,
+            '6': 4,
+            '7': 5,
+            '8': 6,
+            '9': 7,
+            'T': 8,
+            'J': 9,
+            'Q': 10,
+            'K': 11,
+            'A': 12
+        }
         return suit_map[card[0]] * 13 + rank_map[card[1]]
 
     def community_card_to_tuple(self, community_card):
