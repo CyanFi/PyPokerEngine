@@ -158,7 +158,7 @@ class A2CPlayer(BasePokerPlayer):
             elif action_num == 4:
                 community_card = self.community_card_to_tuple(
                     round_state['community_card'][:5])
-            
+
             last_state = (self.hole_card[0], self.hole_card[1]) + community_card + (
                 int(round_state['seats'][self.player_id]['stack']/10),)
             last_state = self.process_state(last_state)
@@ -175,9 +175,10 @@ class A2CPlayer(BasePokerPlayer):
             self.values = torch.cat(self.values)
             advantage = self.returns-self.values
             actor_loss = -(self.log_probs * advantage.detach()).mean()
-            critic_loss = advantage.pow(2).mean()
-            loss = actor_loss+0.5*critic_loss - 0.01*self.entropy
-            print("loss:",loss)
+            loss_fn=nn.SmoothL1Loss()
+            critic_loss = loss_fn(self.returns, self.values)
+            loss = actor_loss+0.5 * critic_loss - 0.01*self.entropy
+            print("loss:", loss.item())
 
             # back prop
             self.optimizer.zero_grad()
