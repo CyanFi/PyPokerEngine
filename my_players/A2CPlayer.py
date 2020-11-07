@@ -16,16 +16,18 @@ print("Training device:", device)
 
 class ActorCritic(nn.Module):
     # neural network here
-    def __init__(self, num_inputs, num_outputs, hidden_size, std=0.0):
+    def __init__(self, num_inputs, num_outputs, std=0.0):
         super(ActorCritic, self).__init__()
 
-        self.critic = nn.Sequential(nn.Linear(num_inputs, hidden_size),
-                                    nn.ReLU(), nn.Linear(hidden_size, 1))
+        self.critic = nn.Sequential(
+            nn.Linear(num_inputs, 128),
+            nn.ReLU(),
+            nn.Linear(128, 1))
 
         self.actor = nn.Sequential(
-            nn.Linear(num_inputs, hidden_size),
+            nn.Linear(num_inputs, 128),
             nn.ReLU(),
-            nn.Linear(hidden_size, num_outputs),
+            nn.Linear(128, num_outputs),
             nn.Softmax(dim=1),
         )
 
@@ -48,7 +50,7 @@ class A2CPlayer(BasePokerPlayer):
         self.gamma = 0.95
         self.num_inputs = 8  # 2 hold card, 5 community card, self.stack
         self.num_outputs = 8  # fold, call, raise min, raise max
-        self.model = ActorCritic(self.num_inputs, self.num_outputs, 128)
+        self.model = ActorCritic(self.num_inputs, self.num_outputs)
         self.optimizer = optim.Adam(self.model.parameters(), lr=self.lr)
 
         # refresh every cycle
@@ -68,7 +70,7 @@ class A2CPlayer(BasePokerPlayer):
         except:
             pass
 
-    def discrete_action(self, state, valid_actions):
+    def discrete_action(self, state-, valid_actions):
         dist, value = self.model(state)
         action_raw = dist.sample()
         if action_raw < 2:

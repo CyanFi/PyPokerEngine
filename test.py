@@ -2,35 +2,39 @@
 #    @Time:    9/18/2020 4:52 PM
 #    @Author:  Qingy
 #    @Email:   qingyuge006@gmail.com
-#    @File:    train.py.py
+#    @File:    test.py
 #    @Project: pypokerengine
 from pypokerengine.api.game import setup_config, start_poker
 from my_players.RandomPlayer import RandomPlayer
+from my_players.AllCall import AllCallPlayer
 from my_players.QLearningPlayer import QLearningPlayer
 from my_players.HumanPlayer import ConsolePlayer
-# from my_players.HonestPlayer import HonestPlayer
+from my_players.DQNPlayer import DQNPlayer
+from my_players.cardplayer import cardplayer
+from my_players.A2CPlayer import A2CPlayer
 from scipy.stats import t
 import math
-num_episode = 500
+
+num_episode = 10000
 win = 0
-path0 = 'model/testing.npy'
+sample_mean = 0
+SXX = 0
+sample_std = 0
+model_path = 'model/a2c_1.dump'
+optimizer_path = 'model/a2c_optim_1.dump'
 count = 0
-log_interval = 10
+log_interval = 1
 log = []
 confidence_level = 0.95
-
 for i in range(0, num_episode):
     count = count + 1
-    config = setup_config(max_round=100, initial_stack=100, small_blind_amount=5)
-    config.register_player(name="p1", algorithm=RandomPlayer())
-    config.register_player(name="p2", algorithm=QLearningPlayer(path0, training=False))
-    config.players_info[1]['algorithm'].oponent = config.players_info[0]['algorithm']
-    config.players_info[0]['algorithm'].oponent = config.players_info[1]['algorithm']
-    game_result = start_poker(config, verbose=0)
-    if game_result['players'][1]['stack'] > game_result['players'][0]['stack']:
-        # player 2 wins
-        win += 1
+    config = setup_config(max_round=100, initial_stack=1500, small_blind_amount=5)
+    config.register_player(name="p1", algorithm=AllCallPlayer())
+    config.register_player(name="p2",
+                           algorithm=A2CPlayer(model_path, optimizer_path, False))
 
+    game_result = start_poker(config, verbose=0)
+    win = (game_result['players'][1]['stack'] - game_result['players'][0]['stack']) / 2 / 10
     last_mean = sample_mean
     sample_mean = sample_mean + (win - sample_mean) / count
     SXX = SXX + (win - sample_mean) * (win - last_mean)
