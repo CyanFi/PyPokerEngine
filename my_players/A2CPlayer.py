@@ -1,9 +1,6 @@
 # based on https://github.com/higgsfield/RL-Adventure-2/blob/master/1.actor-critic.ipynb
 from pypokerengine.players import BasePokerPlayer
 import math
-import random
-
-import numpy as np
 
 import torch
 import torch.nn as nn
@@ -47,12 +44,12 @@ class A2CPlayer(BasePokerPlayer):
         self.stack = 1500
         self.hole_card = None
 
-        self.lr = 1e-3
+        self.lr = 1e-4
         self.gamma = 0.95
         self.num_inputs = 8  # 2 hold card, 5 community card, self.stack
         self.num_outputs = 8  # fold, call, raise min, raise max
         self.model = ActorCritic(self.num_inputs, self.num_outputs, 128)
-        self.optimizer = optim.Adam(self.model.parameters(),lr=self.lr)
+        self.optimizer = optim.Adam(self.model.parameters(), lr=self.lr)
 
         # refresh every cycle
         self.history = []
@@ -83,10 +80,12 @@ class A2CPlayer(BasePokerPlayer):
                 amount = 0
 
         else:
+            # action_raw>=2
             action = "raise"
             max_amount = valid_actions[2]['amount']['max']
             min_amount = valid_actions[2]['amount']['min']
-            amount = min_amount + int((max_amount - min_amount) /2)  / 5 * (action_raw - 2)
+            amount = min_amount + int(
+                (max_amount - min_amount) / 2) / 5 * (action_raw - 2)
         return action_raw, action, amount, dist, value
 
     def declare_action(self, valid_actions, hole_card, round_state):
@@ -115,7 +114,7 @@ class A2CPlayer(BasePokerPlayer):
         self.entropy += dist.entropy().mean()
         self.log_probs.append(log_prob)
         self.values.append(value)
-        self.masks.append(torch.FloatTensor(1 - done).unsqueeze(1).to(device))
+        self.masks.append(torch.Tensor([1]).float().unsqueeze(1).to(device))
         # self.history.append(state + (action_int, int(amount/10)))
 
         return action, amount
@@ -137,7 +136,7 @@ class A2CPlayer(BasePokerPlayer):
 
             reward /= 150
             self.rewards = [reward] * len(self.values)
-            self.masks[-1] = True
+            self.masks[-1] = torch.Tensor([0]).float().unsqueeze(1).to(device)
 
             # preprocess the last state
             action_num = len(round_state['action_histories'])
@@ -176,7 +175,7 @@ class A2CPlayer(BasePokerPlayer):
             loss_fn = nn.SmoothL1Loss()
             critic_loss = loss_fn(self.returns, self.values)
             loss = actor_loss + 0.5 * critic_loss - 0.01 * self.entropy
-            print("loss:", loss.item())
+            # print("loss:", loss.item())
 
             # back prop
             self.optimizer.zero_grad()
@@ -201,7 +200,7 @@ class A2CPlayer(BasePokerPlayer):
         return returns
 
     def save_model(self):
-        torch.save(self.policy_net.state_dict(), self.model_path)
+        torch.save(self.model.state_dict(), self.model_path)
         torch.save(self.optimizer.state_dict(), self.optimizer_path)
 
     # ultility functions
@@ -210,7 +209,7 @@ class A2CPlayer(BasePokerPlayer):
     def process_state(s):
         new_s = list(s)
         for i in range(0, 7):
-            new_s[i] = new_s[i] / 26.0 - 1
+            new_s[i] = new_s[i] / 52.0
         for i in range(7, 8):
             new_s[i] = (new_s[i] - 150) / 150.0
         return tuple(new_s)
@@ -245,8 +244,8 @@ class A2CPlayer(BasePokerPlayer):
         for i in range(0, len(community_card)):
             new_community_card.append(self.card_to_int(community_card[i]))
         for i in range(0, 5 - len(community_card)):
-            # if community card num <5, append 52 to fill out the rest
-            new_community_card.append(52)
+            # if community card num <5, append -52 to fill out the rest
+            new_community_card.append(-52)
         return tuple(new_community_card)
 
     @staticmethod

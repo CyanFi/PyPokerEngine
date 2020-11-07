@@ -29,10 +29,9 @@ memory = None
 config = setup_config(max_round=100, initial_stack=1500, small_blind_amount=5)
 config.register_player(name="p1", algorithm=cardplayer())
 config.register_player(name="p2", algorithm=A2CPlayer(model_path=path0,optimizer_path=path1,training=True))
-# config.players_info[1]['algorithm'].oponent = config.players_info[0]['algorithm']
 for i in range(0, num_episode):
     count = count + 1
-    game_result = start_poker(config, verbose=1)
+    game_result = start_poker(config, verbose=0)
     win = (game_result['players'][1]['stack'] - game_result['players'][0]['stack']) / 2 / 10
     # calculate bb/100g
     last_mean = sample_mean
@@ -45,25 +44,26 @@ for i in range(0, num_episode):
     #log_loss.append(config.players_info[1]['algorithm'].loss)
     if count % log_interval == 0:
         print(count, ' episode, 百手盈利', sample_mean, u"\u00B1", (interval[1] - interval[0]) / 2)
+        config.players_info[1]['algorithm'].save_model()
 log_loss = config.players_info[1]['algorithm'].loss
 # plot
 import matplotlib.pyplot as plt
 
 fig, ax = plt.subplots()
 x_axis = [item[0] for item in log]
-ax.plot(x_axis, [item[1] for item in log], label='Deep Q-learning agent')
+ax.plot(x_axis, [item[1] for item in log], label='A2C agent')
 ax.set_xlabel('episode')
-ax.set_ylabel('winning rate per episode')
+ax.set_ylabel('BB / 100g')
 ax.legend()
-ax.set_title('NLH Poker Game result (Deep Q Learning agent vs card)')
+ax.set_title('NLH Poker Game result (A2C agent vs card)')
 plt.show()
 
 print(log_loss)
 fig, ax = plt.subplots()
 x_axis = [i for i in range(0,len(log_loss))]
-ax.plot(x_axis, [i for i in log_loss], label='Deep Q-learning agent')
+ax.plot(x_axis, [i for i in log_loss], label='A2C agent')
 ax.set_xlabel('episode')
 ax.set_ylabel('loss')
 ax.legend()
-ax.set_title('NLH Poker Game result (Deep Q Learning agent vs card)')
+ax.set_title('NLH Poker Game result (A2C agent vs card)')
 plt.show()
