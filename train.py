@@ -15,13 +15,13 @@ from my_players.A2CPlayer import A2CPlayer
 from scipy.stats import t
 import math
 
-num_episode = 10000
+num_episode = 50000
 win = 0
 sample_mean = 0
 SXX = 0
 sample_std = 0
-path0 = 'model/a2c_1.dump'
-path1 = 'model/a2c_1_optim.dump'
+path0 = 'model/a2c_2.dump'
+path1 = 'model/a2c_2_optim.dump'
 count = 0
 log_interval = 10
 log = []

@@ -12,6 +12,7 @@ from my_players.HumanPlayer import ConsolePlayer
 from my_players.DQNPlayer import DQNPlayer
 from my_players.cardplayer import cardplayer
 from my_players.A2CPlayer import A2CPlayer
+from my_players.HonestPlayer import HonestPlayer
 from scipy.stats import t
 import math
 
@@ -20,18 +21,18 @@ win = 0
 sample_mean = 0
 SXX = 0
 sample_std = 0
-model_path = 'model/a2c_1.dump'
-optimizer_path = 'model/a2c_optim_1.dump'
+model_path = 'model/a2c_2.dump'
+optimizer_path = 'model/a2c_2_optim.dump'
 count = 0
 log_interval = 1
 log = []
-confidence_level = 0.95
+confidence_level = 0.05
 for i in range(0, num_episode):
     count = count + 1
     config = setup_config(max_round=100, initial_stack=1500, small_blind_amount=5)
-    config.register_player(name="p1", algorithm=AllCallPlayer())
+    config.register_player(name="p1", algorithm=cardplayer())
     config.register_player(name="p2",
-                           algorithm=A2CPlayer(model_path, optimizer_path, False))
+                           algorithm=HonestPlayer())
 
     game_result = start_poker(config, verbose=0)
     win = (game_result['players'][1]['stack'] - game_result['players'][0]['stack']) / 2 / 10

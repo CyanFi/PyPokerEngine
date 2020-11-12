@@ -46,8 +46,8 @@ class A2CPlayer(BasePokerPlayer):
         self.stack = 1500
         self.hole_card = None
 
-        self.lr = 1e-4
-        self.gamma = 0.95
+        self.lr = 1e-3
+        self.gamma = 0.99
         self.num_inputs = 8  # 2 hold card, 5 community card, self.stack
         self.num_outputs = 8  # fold, call, raise min, raise max
         self.model = ActorCritic(self.num_inputs, self.num_outputs)
@@ -70,7 +70,7 @@ class A2CPlayer(BasePokerPlayer):
         except:
             pass
 
-    def discrete_action(self, state-, valid_actions):
+    def discrete_action(self, state, valid_actions):
         dist, value = self.model(state)
         action_raw = dist.sample()
         if action_raw < 2:
