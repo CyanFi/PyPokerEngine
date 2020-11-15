@@ -15,12 +15,12 @@ import torch.nn.functional as F
 
 # hyper-parameters
 batch_size = 512
-learning_rate = 1e-8
+learning_rate = 1e-5
 gamma = 0.95
-exp_replay_size = 10000
+exp_replay_size = 5000
 epsilon = 0.1
-learn_start = 1000
-target_net_update_freq = 5000
+learn_start = 100
+target_net_update_freq = 300
 
 
 class ExperienceReplayMemory:
@@ -49,14 +49,14 @@ class DQN(nn.Module):
         self.input_shape = input_shape
         self.num_actions = num_actions
 
-        self.fc1 = nn.Linear(self.input_shape[0], 128)
-        self.fc2 = nn.Linear(128, 512)
-        self.fc3 = nn.Linear(512, 128)
-        self.fc4 = nn.Linear(128, self.num_actions)
+        self.fc1 = nn.Linear(self.input_shape[0], 256)
+        # self.fc2 = nn.Linear(128, 512)
+        self.fc3 = nn.Linear(256, 64)
+        self.fc4 = nn.Linear(64, self.num_actions)
 
     def forward(self, x):
         x = F.relu(self.fc1(x))
-        x = F.relu(self.fc2(x))
+        # x = F.relu(self.fc2(x))
         x = F.relu(self.fc3(x))
         x = self.fc4(x)
         return x
@@ -264,7 +264,7 @@ class DQNPlayer(QLearningPlayer):
             new_community_card.append(self.card_to_int(community_card[i]))
         for i in range(0, 5 - len(community_card)):
             # if community card num <5, append 52 to fill out the rest
-            new_community_card.append(52)
+            new_community_card.append(-100)
         return tuple(new_community_card)
 
     def eps_greedy_policy(self, s, opponent, valid_actions, eps=0.1):
@@ -361,7 +361,7 @@ class DQNPlayer(QLearningPlayer):
                 self.stack = new_stack
             # average reward
             reward /= len(self.history)
-            reward /= 10
+            # reward /= 10
 
             action_num = len(round_state['action_histories'])
             if round_state['action_histories'][self.round_int_to_string(action_num - 1)] == []:
