@@ -133,8 +133,8 @@ class A2CPlayer(BasePokerPlayer):
                 reward = new_stack - self.stack
                 self.stack = new_stack
 
-            reward /= 150
-            self.rewards = [reward] * len(self.values)
+            reward/=150
+            self.rewards = [reward] * len(self.clues)
             self.masks[-1] = torch.Tensor([0]).float().unsqueeze(1).to(device)
 
             # preprocess the last state

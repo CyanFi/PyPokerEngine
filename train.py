@@ -1,4 +1,4 @@
-# GOOD GOOD STUDY, DAY DAY UP!
+# Train Script
 #    @Time:    9/18/2020 4:52 PM
 #    @Author:  Qingy
 #    @Email:   qingyuge006@gmail.com
