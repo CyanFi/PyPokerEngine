@@ -14,24 +14,27 @@ from my_players.cardplayer import cardplayer
 from my_players.A2CPlayer import A2CPlayer
 from scipy.stats import t
 import math
+import os
 
 num_episode = 50000
 win = 0
 sample_mean = 0
 SXX = 0
 sample_std = 0
-path0 = 'model/a2c_2.dump'
-path1 = 'model/a2c_2_optim.dump'
+path0 = os.getcwd() + '/model/a2c_1.dump'
+path1 = os.getcwd() + '/model/a2c_1_optim.dump'
+dqn_path0 = os.getcwd() + '/model/dqn.dump'
+dqn_path1 = os.getcwd() + '/model/dqn_optim.dump'
 count = 0
 log_interval = 10
 log = []
-confidence_level = 0.95
+confidence_level = 0.05
+
 config = setup_config(max_round=100, initial_stack=1500, small_blind_amount=5)
-config.register_player(name="p1", algorithm=cardplayer())
-config.register_player(name="p2",
-                       algorithm=A2CPlayer(model_path=path0,
-                                           optimizer_path=path1,
-                                           training=True))
+config.register_player(name="p1",
+                       algorithm=cardplayer())
+config.register_player(name="p2", algorithm=A2CPlayer(path0, path1, True))
+
 for i in range(0, num_episode):
     count = count + 1
     game_result = start_poker(config, verbose=0)
@@ -45,11 +48,18 @@ for i in range(0, num_episode):
         sample_std = math.sqrt(SXX / (count - 1))
     interval = t.interval(confidence_level, count - 1, sample_mean, sample_std)
     log.append((count, sample_mean))
-    #log_loss.append(config.players_info[1]['algorithm'].loss)
+    # if count == 1:
+    #     _m = config.players_info[0]['algorithm'].declare_memory()
+    #     print("Device:", config.players_info[0]['algorithm'].device)
+    #     print("Device:", config.players_info[0]['algorithm'].device)
+    # else:
+    #     config.players_info[0]['algorithm'].memory = _m
+
     if count % log_interval == 0:
         print(count, ' episode, 百手盈利', sample_mean, u"\u00B1",
               (interval[1] - interval[0]) / 2)
         config.players_info[1]['algorithm'].save_model()
+        # config.players_info[0]['algorithm'].save_model()
 
 # plot
 import matplotlib.pyplot as plt
@@ -60,7 +70,7 @@ ax.plot(x_axis, [item[1] for item in log], label='A2C agent')
 ax.set_xlabel('episode')
 ax.set_ylabel('BB / 100g')
 ax.legend()
-ax.set_title('NLH Poker Game result (A2C agent vs card)')
+ax.set_title('NLH Poker Game result (A2C agent vs Card)')
 plt.show()
 
 # print(log_loss)

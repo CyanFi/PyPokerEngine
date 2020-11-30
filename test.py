@@ -4,6 +4,7 @@
 #    @Email:   qingyuge006@gmail.com
 #    @File:    test.py
 #    @Project: pypokerengine
+from random import random
 from pypokerengine.api.game import setup_config, start_poker
 from my_players.RandomPlayer import RandomPlayer
 from my_players.AllCall import AllCallPlayer
@@ -21,19 +22,18 @@ win = 0
 sample_mean = 0
 SXX = 0
 sample_std = 0
-model_path = 'model/a2c_2.dump'
-optimizer_path = 'model/a2c_2_optim.dump'
+model_path = 'model/a2c_1.dump'
+optimizer_path = 'model/a2c_1_optim.dump'
 count = 0
-log_interval = 1
+log_interval = 10
 log = []
 confidence_level = 0.05
+config = setup_config(max_round=100, initial_stack=1500, small_blind_amount=5)
+config.register_player(name="p1", algorithm=HonestPlayer())
+config.register_player(name="p2",
+                        algorithm=A2CPlayer(model_path,optimizer_path,False))
 for i in range(0, num_episode):
     count = count + 1
-    config = setup_config(max_round=100, initial_stack=1500, small_blind_amount=5)
-    config.register_player(name="p1", algorithm=cardplayer())
-    config.register_player(name="p2",
-                           algorithm=HonestPlayer())
-
     game_result = start_poker(config, verbose=0)
     win = (game_result['players'][1]['stack'] - game_result['players'][0]['stack']) / 2 / 10
     last_mean = sample_mean
@@ -44,4 +44,4 @@ for i in range(0, num_episode):
     interval = t.interval(confidence_level, count - 1, sample_mean, sample_std)
 
     if count % log_interval == 0:
-        print(count, ' episode, 百手盈利', sample_mean, u"\u00B1", (interval[1] - interval[0]) / 2)
+        print('honest vs a2c',count, ' episode, 百手盈利', sample_mean, u"\u00B1", (interval[1] - interval[0]) / 2)

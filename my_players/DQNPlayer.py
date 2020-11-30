@@ -14,13 +14,13 @@ import torch.optim as optim
 import torch.nn.functional as F
 
 # hyper-parameters
-batch_size = 512
-learning_rate = 1e-8
+batch_size = 64
+learning_rate = 1e-4
 gamma = 0.95
 exp_replay_size = 10000
-epsilon = 0.1
+epsilon = 0.05
 learn_start = 1000
-target_net_update_freq = 5000
+target_net_update_freq = 600
 
 
 class ExperienceReplayMemory:
@@ -50,15 +50,13 @@ class DQN(nn.Module):
         self.num_actions = num_actions
 
         self.fc1 = nn.Linear(self.input_shape[0], 128)
-        self.fc2 = nn.Linear(128, 512)
-        self.fc3 = nn.Linear(512, 128)
-        self.fc4 = nn.Linear(128, self.num_actions)
+        self.fc2 = nn.Linear(128, 64)
+        self.fc3 = nn.Linear(64, self.num_actions)
 
     def forward(self, x):
         x = F.relu(self.fc1(x))
         x = F.relu(self.fc2(x))
-        x = F.relu(self.fc3(x))
-        x = self.fc4(x)
+        x = self.fc3(x)
         return x
 
 
