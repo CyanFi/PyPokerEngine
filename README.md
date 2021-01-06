@@ -3,8 +3,8 @@
 ```sh
 # Game environment
 pip install PyPokerEngine
-# Deep Learning
-pip install pytorch
+# Pytorch
+pip install torch
 # Process the result
 pip install scipy
 ```
