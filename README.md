@@ -1,4 +1,6 @@
-# NLH Poker AI Reinforcement agents
+# NLH Poker Reinforcement Learning agents
+## Acknowledgement
+This project is a course project of ESTR3108 in CUHK. It is based on [PyPokerEngine](https://github.com/ishikota/PyPokerEngine), detailed docs on env could be found at its [doc site](https://ishikota.github.io/PyPokerEngine/).
 ## Preliminaries
 ```sh
 # Game environment
@@ -10,7 +12,7 @@ pip install scipy
 ```
 ## Run
 ```sh
-# Train model
+# Train AI agents
 python train.py
 
 # Test a model or just play a game
@@ -26,7 +28,7 @@ python test.py
 + AllCall Player
 + Human Player
 
-## Directory Structuer
+## Directory Structure
 ![Dir Tree](pic/dir-tree.png)
 
 ## Train Example
@@ -38,5 +40,4 @@ An example figure oczraining process.
 + Neural Network: 8->128->8, relu
 + Reward: No everage, /150
 
-## Acknowledgement
-This project is based on [PyPokerEngine](https://github.com/ishikota/PyPokerEngine), detailed docs on env could be found at its [doc site](https://ishikota.github.io/PyPokerEngine/).
+
